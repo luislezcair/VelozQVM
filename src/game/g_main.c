@@ -75,7 +75,9 @@ vmCvar_t  g_weaponTeamRespawn;
 vmCvar_t  g_motd;
 vmCvar_t  g_synchronousClients;
 vmCvar_t  g_warmup;
+vmCvar_t  g_warmupMode;
 vmCvar_t  g_doWarmup;
+vmCvar_t  g_doWarmupCountdown;
 vmCvar_t  g_proximityMines;
 vmCvar_t  g_proximityMinesPrice;
 vmCvar_t  g_proximityMinesLiveTime;
@@ -84,7 +86,6 @@ vmCvar_t  g_lockTeamsAtStart;
 vmCvar_t  g_logFile;
 vmCvar_t  g_logFileSync;
 
-//Devils:
 vmCvar_t  g_allowClientBlackNames;
 
 vmCvar_t  g_blood;
@@ -336,7 +337,10 @@ static cvarTable_t   gameCvarTable[ ] =
 
   { &g_multipleWeapons, "g_multipleWeapons", "0", CVAR_ARCHIVE, 0, qtrue  },
   { &g_warmup, "g_warmup", "10", CVAR_ARCHIVE, 0, qtrue  },
+  { &g_warmupMode, "g_warmupMode", "1", CVAR_ARCHIVE, 0, qtrue  },
   { &g_doWarmup, "g_doWarmup", "1", CVAR_ARCHIVE, 0, qtrue  },
+  { &g_doWarmupCountdown, "g_doWarmupCountdown", "0", CVAR_ARCHIVE, 0, qtrue  },
+
   { &g_logFile, "g_logFile", "games.log", CVAR_ARCHIVE, 0, qfalse  },
   { &g_logFileSync, "g_logFileSync", "0", CVAR_ARCHIVE, 0, qfalse  },
   
@@ -1264,6 +1268,12 @@ void G_SpawnClients( pTeam_t team )
   vec3_t        spawn_origin, spawn_angles;
   spawnQueue_t  *sq = NULL;
   int           numSpawns = 0;
+
+  if( g_doWarmup.integer && g_warmupMode.integer == 2 &&
+      level.time - level.startTime < g_warmup.integer * 1000 )
+  {
+    return;
+  }
 
   if( team == PTE_ALIENS )
   {
@@ -2786,6 +2796,30 @@ void CheckMsgTimer( void )
 
 /*
 ==================
+CheckCountdown
+==================
+*/
+void CheckCountdown( void )
+{
+  static int lastmsg = 0;
+  int timeleft = g_warmup.integer - ( level.time - level.startTime ) / 1000;
+
+  if( !g_doWarmupCountdown.integer || !g_doWarmup.integer || timeleft < 0 )
+    return;
+
+  if( level.time - lastmsg < 1000 )
+    return;
+
+  lastmsg = level.time;
+
+  if( timeleft > 0 )
+    trap_SendServerCommand( -1, va( "cp \"^1Warmup Time:^7\n^%i----- ^7%i ^%i-----\"", timeleft % 7, timeleft, timeleft % 7 ) );
+  else if( timeleft == 0 )
+    trap_SendServerCommand( -1, "cp \"^2----- GO! -----^7\"" );
+}
+
+/*
+==================
 CheckCvars
 ==================
 */
@@ -2906,6 +2940,7 @@ void G_RunFrame( int levelTime )
   }
 
   CheckMsgTimer( );
+  CheckCountdown( );
 
   level.framenum++;
   level.previousTime = level.time;

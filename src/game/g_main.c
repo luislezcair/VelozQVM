@@ -278,6 +278,8 @@ static cvarTable_t   gameCvarTable[ ] =
   { NULL, "P", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
   { NULL, "ff", "0", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
 
+  { NULL, "qvm_version", QVM_NAME " " QVM_VERSIONNUM " (" __DATE__ ", " __TIME__ ")", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
+
   // latched vars
 
   { &g_maxclients, "sv_maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH | CVAR_ARCHIVE, 0, qfalse  },
@@ -807,9 +809,11 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
   level.startTime = levelTime;
   level.oldTime = levelTime;
   level.alienStage2Time = level.alienStage3Time =
-    level.humanStage2Time = level.humanStage3Time = level.startTime;
+  level.humanStage2Time = level.humanStage3Time = level.startTime;
 
   level.snd_fry = G_SoundIndex( "sound/misc/fry.wav" ); // FIXME standing in lava / slime
+
+  trap_Cvar_Set( "qvm_version", QVM_NAME " " QVM_VERSIONNUM " (" __DATE__ ", " __TIME__ ")" );
 
   if( g_logFile.string[ 0 ] )
   {
@@ -1326,6 +1330,22 @@ void G_CountSpawns( void )
 
 /*
 ============
+G_HitTimelimit
+============
+*/
+void G_HitTimelimit( void )
+{
+    level.lastWin = PTE_NONE;
+    level.timelimitHit = qtrue;
+
+    trap_SendServerCommand( -1, "print \"Timelimit hit\n\"" );
+    trap_SetConfigstring( CS_WINNER, "Stalemate" );
+    LogExit( "Timelimit hit." );
+    G_admin_maplog_result( "t" );
+}
+
+/*
+============
 G_TimeTilSuddenDeath
 ============
 */
@@ -1345,11 +1365,11 @@ G_TimeTilExtremeSuddenDeath
 */
 int G_TimeTilExtremeSuddenDeath( void )
 {
-	  if( !g_extremeSuddenDeathTime.integer )
-		      return 1; // Always some time away
+    if( !g_extremeSuddenDeathTime.integer )
+        return 1; // Always some time away
 
-	    return ( g_extremeSuddenDeathTime.integer * 60000 ) -
-		             ( level.time - level.startTime );
+    return ( g_extremeSuddenDeathTime.integer * 60000 ) -
+           ( level.time - level.startTime );
 }
 
 #define PLAYER_COUNT_MOD 5.0f
@@ -1425,31 +1445,43 @@ void G_CalculateBuildPoints( void )
     }
   if( g_extremeSuddenDeath.integer )
   {
-	  localHTP = 0;
-  	localATP = 0;
+    localHTP = 0;
+    localATP = 0;
+
     //warn about extreme sudden death
     if( level.extremeSuddenDeathWarning < TW_PASSED )
     {
-    	if( !( level.averageNumAlienClients || level.averageNumHumanClients ) ){
-    		g_timelimit.integer = 1;
-    		return;
-    	}
-    	else {
-	      trap_SendConsoleCommand( EXEC_NOW, "alienWin\n" );
+        if( level.numAlienClients == 0 && level.numHumanClients == 0 )
+        {
+            if( !level.timelimitHit ) {
+                G_HitTimelimit();
+                return;
+            }
+        }
+        else
+        {
+            //Destroy spawns
+            trap_SendConsoleCommand( EXEC_NOW, "alienWin\n" );
   	    trap_SendConsoleCommand( EXEC_NOW, "humanWin\n" );
-  	  }
-      
-      if( g_alienStage.integer < 2 )
-          trap_SendConsoleCommand( EXEC_NOW, "g_alienStage 2\n" );
-      if( g_humanStage.integer < 2 )
-          trap_SendConsoleCommand( EXEC_NOW, "g_humanStage 2\n" );
-          
-      for( i = 0; i < MAX_CLIENTS; i++ )
-          level.clients[i].ps.persistant[PERS_CREDIT] = 2000;
-          
-      trap_SendServerCommand( -1, "cp \"Extreme Sudden Death!\"\n" );
-      trap_SendServerCommand( -1, "print \"All ^1SPAWNS ^7have been destroyed!\n\"\n" );
-      level.extremeSuddenDeathWarning = TW_PASSED;
+
+            if( g_alienStage.integer < 2 )
+                trap_SendConsoleCommand( EXEC_NOW, "g_alienStage 2\n" );
+            if( g_humanStage.integer < 2 )
+                trap_SendConsoleCommand( EXEC_NOW, "g_humanStage 2\n" );
+
+            for( i = 0; i < MAX_CLIENTS; i++ )
+            {
+                if( level.clients[ i ].pers.teamSelection == PTE_ALIENS )
+                    level.clients[ i ].ps.persistant[ PERS_CREDIT ] = 9;
+                else if ( level.clients[ i ].pers.teamSelection == PTE_HUMANS )
+                    level.clients[ i ].ps.persistant[ PERS_CREDIT ] = 2000;
+            }
+
+            trap_SendServerCommand( -1, "print \"Extreme Sudden Death!\n\"\n" );
+            trap_SendServerCommand( -1, "cp \"^1SPAWNS ^7destroyed!\n\"\n" );
+
+            level.extremeSuddenDeathWarning = TW_PASSED;
+        }
     }
   }
   else
@@ -2453,15 +2485,11 @@ void CheckExitRules( void )
   {
     if( level.time - level.startTime >= g_timelimit.integer * 60000 )
     {
-      level.lastWin = PTE_NONE;
-      trap_SendServerCommand( -1, "print \"Timelimit hit\n\"" );
-      trap_SetConfigstring( CS_WINNER, "Stalemate" );
-      LogExit( "Timelimit hit." );
-      G_admin_maplog_result( "t" );
+      G_HitTimelimit();
       return;
     }
     else if( level.time - level.startTime >= ( g_timelimit.integer - 5 ) * 60000 &&
-          level.timelimitWarning < TW_IMMINENT && ( level.averageNumAlienClients || level.averageNumHumanClients ) )
+          level.timelimitWarning < TW_IMMINENT )
     {
       trap_SendServerCommand( -1, "cp \"5 minutes remaining!\"" );
       level.timelimitWarning = TW_IMMINENT;

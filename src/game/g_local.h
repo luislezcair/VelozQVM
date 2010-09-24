@@ -27,6 +27,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "bg_public.h"
 #include "g_public.h"
 
+#define QVM_NAME       "VelozQVM"
+#define QVM_VERSIONNUM "1.0"
+
 typedef struct gentity_s gentity_t;
 typedef struct gclient_s gclient_t;
 
@@ -731,6 +734,7 @@ typedef struct
   int               humanBaseAttackTimer;
 
   pTeam_t           lastWin;
+  qboolean          timelimitHit;
 
   int               suddenDeathABuildPoints;
   int               suddenDeathHBuildPoints;
@@ -1106,7 +1110,9 @@ void QDECL G_Error( const char *fmt, ... );
 void CheckVote( void );
 void CheckTeamVote( int teamnum );
 void LogExit( const char *string );
-int  G_TimeTilSuddenDeath( void );
+int G_TimeTilSuddenDeath( void );
+int G_TimeTilExtremeSuddenDeath( void );
+void G_HitTimelimit( void );
 qboolean G_Flood_Limited( gentity_t *ent );
 
 //

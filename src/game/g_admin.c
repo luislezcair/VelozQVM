@@ -300,12 +300,12 @@ g_admin_cmd_t g_admin_cmds[ ] =
       "revert one or more buildlog events, optionally of only one team",
       "(^5xnum^7) (^5#ID^7) (^5-name|num^7) (^5a|h^7)"
     },
-/* Broken for the moment...
+
     {"seen", G_admin_seen, "seen",
       "find the last time a player was on the server",
       "[^3name|admin#^7]"
     },
-*/
+
     {"setlevel", G_admin_setlevel, "setlevel",
       "sets the admin level of a player",
       "[^3name|slot#|admin#^7] [^3level^7]"
@@ -670,6 +670,8 @@ static void admin_writeconfig( void )
     admin_writeconfig_int( g_admin_admins[ i ]->level, f );
     trap_FS_Write( "flags   = ", 10, f );
     admin_writeconfig_string( g_admin_admins[ i ]->flags, f );
+    trap_FS_Write( "seen    = ", 10, f );
+    admin_writeconfig_int( g_admin_admins[ i ]->seen, f );
     trap_FS_Write( "\n", 1, f );
   }
   for( i = 0; i < MAX_ADMIN_BANS && g_admin_bans[ i ]; i++ )
@@ -1347,7 +1349,8 @@ void G_admin_namelog_update( gclient_t *client, qboolean disconnect )
   
   int clientNum = ( client - level.clients );
 
- // G_admin_seen_update( client->pers.guid );
+  if( client->sess.invisible == qfalse )
+    G_admin_seen_update( client->pers.guid );
 
   G_SanitiseName( client->pers.netname, n1 );
   for( i = 0; i < MAX_ADMIN_NAMELOGS && g_admin_namelog[ i ]; i++ )
@@ -1504,6 +1507,10 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
       {
         admin_readconfig_string( &cnf, a->flags, sizeof( a->flags ) );
       }
+      else if( !Q_stricmp( t, "seen" ) )
+      {
+          admin_readconfig_int( &cnf, &a->seen );
+      }
       else
       {
         ADMP( va( "^3!readconfig: ^7[admin] parse error near %s on line %d\n",
@@ -1598,7 +1605,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
       *a->guid = '\0';
       a->level = 0;
       *a->flags = '\0';
-      //a->seen = 0;
+      a->seen = 0;
       admin_open = qtrue;
     }
     else if( !Q_stricmp( t, "[ban]" ) )
@@ -3209,8 +3216,8 @@ qboolean G_admin_listplayers( gentity_t *ent, int skiparg )
   }
 
   ADMBP_begin();
-  ADMBP( va( "^3!listplayers^7: %d players connected:\n",
-    level.numConnectedClients - invisiblePlayers ) );
+  ADMBP( va( "^3!listplayers^7: %d players connected:\n", level.numConnectedClients - invisiblePlayers ) );
+
   for( i = 0; i < level.maxclients; i++ )
   {
     p = &level.clients[ i ];
@@ -5482,7 +5489,7 @@ qboolean G_admin_L0(gentity_t *ent, int skiparg ){
 
   return qtrue;
 }
-/*
+
 qboolean G_admin_seen(gentity_t *ent, int skiparg )
 {
   char name[ MAX_NAME_LENGTH ];
@@ -5552,8 +5559,11 @@ qboolean G_admin_seen(gentity_t *ent, int skiparg )
         if( !Q_stricmp( vic->client->pers.guid, g_admin_admins[ i ]->guid )
           && strstr( name, search ) )
         {
-          ison = qtrue;
-          break;
+            if( vic->client->sess.invisible == qfalse )
+            {
+                ison = qtrue;
+                break;
+            }
         }
       }
 
@@ -5602,7 +5612,7 @@ void G_admin_seen_update( char *guid )
     }
   }
 }
-*/
+
 void G_admin_adminlog_cleanup( void )
 {
   int i;
@@ -5634,6 +5644,7 @@ void G_admin_adminlog_log( gentity_t *ent, char *command, char *args, int skipar
       !Q_stricmp( command, "listplayers" ) ||
       !Q_stricmp( command, "namelog" ) ||
       !Q_stricmp( command, "showbans" ) ||
+      !Q_stricmp( command, "seen" ) ||
       !Q_stricmp( command, "time" ) )
     return;
 

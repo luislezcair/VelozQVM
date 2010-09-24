@@ -46,51 +46,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MAX_ADMIN_BAN_REASON 50
 
 #define MAX_ADMIN_BANSUSPEND_DAYS 14
-/*
-#define CHAT_MAXCHAN 10
-#define CHAT_MAXPASS 12
-*/
-/*
- * 1 - cannot be vote kicked, vote muted
- * 2 - cannot be censored or flood protected TODO
- * 3 - never loses credits for changing teams
- * 4 - can see team chat as a spectator
- * 5 - can switch teams any time, regardless of balance
- * 6 - does not need to specify a reason for a kick/ban
- * 7 - can call a vote at any time (regardless of a vote being disabled or 
- * voting limitations)
- * 8 - does not need to specify a duration for a ban
- * 9 - can run commands from team chat
- * 0 - inactivity rules do not apply to them
- * ! - admin commands cannot be used on them
- * @ - does not show up as an admin in !listplayers
- * $ - sees all information in !listplayers 
- * # - permanent designated builder
- * ? - sees and can use adminchat
- */
-
-/*
-#define ADMF_IMMUNITY '1'
-#define ADMF_NOCENSORFLOOD '2'
-#define ADMF_TEAMCHANGEFREE '3'
-#define ADMF_SPEC_ALLCHAT '4'
-#define ADMF_FORCETEAMCHANGE '5'
-#define ADMF_UNACCOUNTABLE '6'
-#define ADMF_NO_VOTE_LIMIT '7'
-#define ADMF_CAN_PERM_BAN '8'
-#define ADMF_TEAMCHAT_CMD '9'
-#define ADMF_ACTIVITY '0'
-
-#define ADMF_IMMUTABLE '!'
-#define ADMF_INCOGNITO '@'
-#define ADMF_ADMINCHAT '?'
-#define ADMF_SEESFULLLISTPLAYERS '$'
-#define ADMF_DBUILDER '#'
-
-#define ADMF_BUILDCHECK ')'
-
-#define ADMF_BAN_IMMUNITY '&'
-*/
 
 #define ADMF_IMMUNITY            "IMMUNITY"
 #define ADMF_NOCENSORFLOOD       "NOCENSORFLOOD"
@@ -146,8 +101,7 @@ typedef struct g_admin_admin
   char name[ MAX_NAME_LENGTH ];
   int level;
   char flags[ MAX_ADMIN_FLAGS ];
-//  int seen;
-//  char chat[ CHAT_MAXCHAN ][ CHAT_MAXPASS ];
+  int seen;
 }
 g_admin_admin_t;
 
@@ -263,8 +217,10 @@ qboolean G_admin_practice( gentity_t *ent, int skiparg );
 qboolean G_admin_buildlog( gentity_t *ent, int skiparg );
 qboolean G_admin_revert( gentity_t *ent, int skiparg );
 qboolean G_admin_L0( gentity_t *ent, int skiparg );
+
 qboolean G_admin_seen(gentity_t *ent, int skiparg );
 void G_admin_seen_update( char *guid );
+
 qboolean G_admin_listmaps( gentity_t *ent, int skiparg );
 qboolean G_admin_flag( gentity_t *ent, int skiparg );
 qboolean G_admin_flaglist( gentity_t *ent, int skiparg );

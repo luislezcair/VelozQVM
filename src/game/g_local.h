@@ -736,9 +736,12 @@ typedef struct
   pTeam_t           lastWin;
   qboolean          timelimitHit;
 
+  qboolean          esdSpawnsWarning;
+
   int               suddenDeathABuildPoints;
   int               suddenDeathHBuildPoints;
   qboolean          suddenDeath;
+
   timeWarning_t     suddenDeathWarning;
   timeWarning_t     timelimitWarning;
   timeWarning_t     extremeSuddenDeathWarning;
@@ -781,8 +784,8 @@ typedef struct
   
   buildHistory_t    *buildHistory;
   int               lastBuildID;
-  int				lastTeamUnbalancedTime;
-  int				numTeamWarnings;  
+  int               lastTeamUnbalancedTime;
+  int               numTeamWarnings;
 
   int               bleeders;
   

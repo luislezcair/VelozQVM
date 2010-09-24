@@ -1464,10 +1464,8 @@ void G_CalculateBuildPoints( void )
             trap_SendConsoleCommand( EXEC_NOW, "alienWin\n" );
   	    trap_SendConsoleCommand( EXEC_NOW, "humanWin\n" );
 
-            if( g_alienStage.integer < 2 )
-                trap_SendConsoleCommand( EXEC_NOW, "g_alienStage 2\n" );
-            if( g_humanStage.integer < 2 )
-                trap_SendConsoleCommand( EXEC_NOW, "g_humanStage 2\n" );
+            trap_Cvar_Set( "g_alienStage", "2" );
+            trap_Cvar_Set( "g_humanStage", "2" );
 
             for( i = 0; i < MAX_CLIENTS; i++ )
             {
@@ -1478,7 +1476,6 @@ void G_CalculateBuildPoints( void )
             }
 
             trap_SendServerCommand( -1, "print \"Extreme Sudden Death!\n\"\n" );
-            trap_SendServerCommand( -1, "cp \"^1SPAWNS ^7destroyed!\n\"\n" );
 
             level.extremeSuddenDeathWarning = TW_PASSED;
         }
@@ -1504,8 +1501,8 @@ void G_CalculateBuildPoints( void )
     localATP = level.suddenDeathABuildPoints;
   }
   else if( g_extremeSuddenDeath.integer ) {
-  	localHTP = 0;
-  	localATP = 0;
+    localHTP = 0;
+    localATP = 0;
   }
   else
   {
@@ -2500,6 +2497,15 @@ void CheckExitRules( void )
       trap_SendServerCommand( -1, "cp \"1 minute remaining!\"" );
       level.timelimitWarning = TW_PASSED;
     }
+  }
+
+  //Wait 4 seconds to warn about destroyed spawns in ESD
+  //beacause it overlaps with Stage messages
+  if( level.time - level.startTime >= g_extremeSuddenDeathTime.integer * 60000 + 4000
+      && !level.esdSpawnsWarning)
+  {
+      trap_SendServerCommand( -1, "cp \"^1SPAWNS ^7destroyed!\n\"\n" );
+      level.esdSpawnsWarning = qtrue;
   }
 
   if( level.uncondHumanWin ||

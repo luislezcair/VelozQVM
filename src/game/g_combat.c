@@ -505,7 +505,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
     else if( self->client->ps.stats[ STAT_PTEAM ] == PTE_ALIENS )
     {
       trap_Cvar_Set( "g_humanKills", va( "%d", g_humanKills.integer + 1 ) );
-      if( g_humanStage.integer < 2 )
+      if( g_humanStage.integer < S3 )
       {
 	self->client->pers.statscounters.feeds++;
 	level.alienStatsCounters.feeds++;

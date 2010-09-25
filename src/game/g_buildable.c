@@ -2268,6 +2268,10 @@ void HMGTurret_FindEnemy( gentity_t *self )
   self->enemy = NULL;
 }
 
+#define MGTURRET_DROOPSCALE     0.5f
+#define TURRET_REST_TIME        5000
+#define TURRET_REST_SPEED       3.0f
+#define TURRET_REST_TOLERANCE   4.0f
 
 /*
 ================
@@ -2288,6 +2292,22 @@ void HMGTurret_Think( gentity_t *self )
   //if not powered don't do anything and check again for power next think
   if( !( self->powered = G_FindPower( self ) ) )
   {
+    if( self->spawned )
+    {
+       //unpowered turret barrel falls to bottom of range
+       float droop;
+
+       droop = AngleNormalize180( self->s.angles2[ PITCH ] );
+       if( droop < MGTURRET_VERTICALCAP )
+       {
+           droop += MGTURRET_DROOPSCALE;
+           if( droop > MGTURRET_VERTICALCAP )
+               droop = MGTURRET_VERTICALCAP;
+           self->s.angles2[ PITCH ] = droop;
+           return;
+       }
+    }
+
     self->nextthink = level.time + POWER_REFRESH_TIME;
     return;
   }

@@ -274,7 +274,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
   }
   
   }
-  else if( attacker->client )
+  else if( attacker && attacker->client )
   {
     // tjw: obviously this is a hack and belongs in the client, but
     //      this works as a temporary fix.

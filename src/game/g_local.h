@@ -388,9 +388,10 @@ typedef struct
   int                 nameChangeTime;
   int                 nameChanges;
 
-    // used to save persistant[] values while in SPECTATOR_FOLLOW mode
-  int                 savedScore;
-  int                 savedCredit;
+    // used to save playerState_t values while in SPECTATOR_FOLLOW mode
+  int                 score;
+  int                 credit;
+  int                 ping;
 
   int                 lastFloodTime;         // level.time of last flood-limited command
   int                 floodDemerits;         // number of flood demerits accumulated
@@ -546,7 +547,8 @@ void      G_InitSpawnQueue( spawnQueue_t *sq );
 int       G_GetSpawnQueueLength( spawnQueue_t *sq );
 int       G_PopSpawnQueue( spawnQueue_t *sq );
 int       G_PeekSpawnQueue( spawnQueue_t *sq );
-void      G_PushSpawnQueue( spawnQueue_t *sq, int clientNum );
+qboolean  G_PushSpawnQueue( spawnQueue_t *sq, int clientNum );
+qboolean  G_SearchSpawnQueue( spawnQueue_t *sq, int clientNum );
 qboolean  G_RemoveFromSpawnQueue( spawnQueue_t *sq, int clientNum );
 int       G_GetPosInSpawnQueue( spawnQueue_t *sq, int clientNum );
 
@@ -639,10 +641,9 @@ typedef struct
   int               framenum;
   int               time;                         // in msec
   int               previousTime;                 // so movers can back up when blocked
+  int               frameMsec;                    // trap_Milliseconds() at end frame
 
   int               startTime;                    // level.time the map was started
-  
-  int								oldTime;											// used for reading the chat file.
 
   int               teamScores[ TEAM_NUM_TEAMS ];
   int               lastTeamLocationTime;         // last time of client team location update
@@ -828,15 +829,20 @@ char      *G_NewString( const char *string );
 // g_cmds.c
 //
 void      Cmd_Score_f( gentity_t *ent );
+
+void      G_StopFromFollowing( gentity_t *ent );
 void      G_StopFollowing( gentity_t *ent );
 qboolean  G_FollowNewClient( gentity_t *ent, int dir );
 void      G_ToggleFollow( gentity_t *ent );
+
 qboolean  G_MatchOnePlayer( int *plist, char *err, int len );
 int       G_ClientNumbersFromString( char *s, int *plist );
-void 			G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText );
+
+void      G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText );
 int       G_SayArgc( void );
 qboolean  G_SayArgv( int n, char *buffer, int bufferLength );
 char      *G_SayConcatArgs( int start );
+
 void      G_DecolorString( char *in, char *out );
 void      G_ParseEscapedString( char *buffer );
 void      G_LeaveTeam( gentity_t *self );
@@ -899,7 +905,7 @@ qboolean          G_IsOvermindBuilt( void );
 void              G_BuildableThink( gentity_t *ent, int msec );
 qboolean          G_BuildableRange( vec3_t origin, float r, buildable_t buildable );
 itemBuildError_t  G_CanBuild( gentity_t *ent, buildable_t buildable, int distance, vec3_t origin );
-qboolean G_BuildingExists( int bclass ) ;
+qboolean          G_BuildingExists( int bclass ) ;
 qboolean          G_BuildIfValid( gentity_t *ent, buildable_t buildable );
 void              G_SetBuildableAnim( gentity_t *ent, buildableAnimNumber_t anim, qboolean force );
 void              G_SetIdleBuildableAnim( gentity_t *ent, buildableAnimNumber_t anim );
@@ -1065,9 +1071,12 @@ void      G_UpdateZaps( int msec );
 //
 void      G_AddCreditToClient( gclient_t *client, short credit, qboolean cap );
 team_t    TeamCount( int ignoreClientNum, int team );
-void      SetClientViewAngle( gentity_t *ent, vec3_t angle );
-gentity_t *SelectTremulousSpawnPoint( pTeam_t team, vec3_t preference, vec3_t origin, vec3_t angles );
-gentity_t *SelectSpawnPoint( vec3_t avoidPoint, vec3_t origin, vec3_t angles );void      SpawnCorpse( gentity_t *ent );
+void      G_SetClientViewAngle( gentity_t *ent, vec3_t angle );
+gentity_t *G_SelectTremulousSpawnPoint( pTeam_t team, vec3_t preference, vec3_t origin, vec3_t angles );
+gentity_t *G_SelectSpawnPoint( vec3_t avoidPoint, vec3_t origin, vec3_t angles );
+gentity_t *G_SelectAlienLockSpawnPoint( vec3_t origin, vec3_t angles );
+gentity_t *G_SelectHumanLockSpawnPoint( vec3_t origin, vec3_t angles );
+void      SpawnCorpse( gentity_t *ent );
 void      respawn( gentity_t *ent );
 void      BeginIntermission( void );
 void      ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles );

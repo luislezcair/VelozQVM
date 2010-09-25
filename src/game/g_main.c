@@ -525,8 +525,6 @@ void CheckExitRules( void );
 void G_CountSpawns( void );
 void G_CalculateBuildPoints( void );
 
-void G_ReadChatFile( void );
-
 /*
 ================
 vmMain
@@ -811,7 +809,6 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
   memset( &level, 0, sizeof( level ) );
   level.time = levelTime;
   level.startTime = levelTime;
-  level.oldTime = levelTime;
   level.alienStage2Time = level.alienStage3Time =
   level.humanStage2Time = level.humanStage3Time = level.startTime;
 
@@ -1057,9 +1054,9 @@ int QDECL SortRanks( const void *a, const void *b )
   cb = &level.clients[ *(int *)b ];
 
   // then sort by score
-  if( ca->ps.persistant[ PERS_SCORE ] > cb->ps.persistant[ PERS_SCORE ] )
+  if( ca->pers.score > cb->pers.score )
     return -1;
-  else if( ca->ps.persistant[ PERS_SCORE ] < cb->ps.persistant[ PERS_SCORE ] )
+  else if( ca->pers.score < cb->pers.score )
     return 1;
   else
     return 0;
@@ -1141,17 +1138,39 @@ int G_PeekSpawnQueue( spawnQueue_t *sq )
 
 /*
 ============
+G_SearchSpawnQueue
+
+Look to see if clientNum is already in the spawnQueue
+============
+*/
+qboolean G_SearchSpawnQueue( spawnQueue_t *sq, int clientNum )
+{
+  int i;
+
+  for( i = 0; i < MAX_CLIENTS; i++ )
+    if( sq->clients[ i ] == clientNum )
+      return qtrue;
+  return qfalse;
+}
+
+/*
+============
 G_PushSpawnQueue
 
 Add an element to the back of the spawn queue
 ============
 */
-void G_PushSpawnQueue( spawnQueue_t *sq, int clientNum )
+qboolean G_PushSpawnQueue( spawnQueue_t *sq, int clientNum )
 {
+  // don't add the same client more than once
+  if( G_SearchSpawnQueue( sq, clientNum ) )
+    return qfalse;
+
   sq->back = QUEUE_PLUS1( sq->back );
   sq->clients[ sq->back ] = clientNum;
 
   g_entities[ clientNum ].client->ps.pm_flags |= PMF_QUEUED;
+  return qtrue;
 }
 
 /*
@@ -1291,7 +1310,7 @@ void G_SpawnClients( pTeam_t team )
     clientNum = G_PeekSpawnQueue( sq );
     ent = &g_entities[ clientNum ];
 
-    if( ( spawn = SelectTremulousSpawnPoint( team,
+    if( ( spawn = G_SelectTremulousSpawnPoint( team,
             ent->client->pers.lastDeathLocation,
             spawn_origin, spawn_angles ) ) )
     {
@@ -1717,11 +1736,6 @@ and team change.
 void CalculateRanks( void )
 {
   int       i;
-  int       rank;
-  int       score;
-  int       newScore;
-  gclient_t *cl;
-  
   char      P[ MAX_CLIENTS + 1 ] = {""};
   int       ff = 0;
 
@@ -1733,7 +1747,6 @@ void CalculateRanks( void )
   level.numHumanClients = 0;
   level.numLiveAlienClients = 0;
   level.numLiveHumanClients = 0;
-  level.bleeders = 0;
 
   for( i = 0; i < level.maxclients; i++ )
   {
@@ -1766,53 +1779,26 @@ void CalculateRanks( void )
           if( level.clients[ i ].sess.sessionTeam != TEAM_SPECTATOR )
             level.numLiveHumanClients++;
         }
-
-        if( level.clients[ i ].pers.bleeder )
-          level.bleeders++;
       }
     }
   }
   level.numteamVotingClients[ 0 ] = level.numHumanClients;
   level.numteamVotingClients[ 1 ] = level.numAlienClients;
-  P[ i + 1 ] = '\0';
+  P[ i ] = '\0';
   trap_Cvar_Set( "P", P );
 
-  if( g_friendlyFire.integer )
+  if( g_friendlyFire.value>0 )
     ff |= ( FFF_HUMANS | FFF_ALIENS );
-  if( g_friendlyFireHumans.integer )
+  if( g_friendlyFireHumans.value>0  )
     ff |=  FFF_HUMANS;
-  if( g_friendlyFireAliens.integer )
+  if( g_friendlyFireAliens.value>0  )
     ff |=  FFF_ALIENS;
-  if( g_friendlyBuildableFire.integer )
+  if( g_friendlyBuildableFire.value>0  )
     ff |=  FFF_BUILDABLES;
   trap_Cvar_Set( "ff", va( "%i", ff ) );
 
   qsort( level.sortedClients, level.numConnectedClients,
     sizeof( level.sortedClients[ 0 ] ), SortRanks );
-
-  // set the rank value for all clients that are connected and not spectators
-  rank = -1;
-  score = 0;
-  for( i = 0;  i < level.numPlayingClients; i++ )
-  {
-    cl = &level.clients[ level.sortedClients[ i ] ];
-    newScore = cl->ps.persistant[ PERS_SCORE ];
-
-    if( i == 0 || newScore != score )
-    {
-      rank = i;
-      // assume we aren't tied until the next client is checked
-      level.clients[ level.sortedClients[ i ] ].ps.persistant[ PERS_RANK ] = rank;
-    }
-    else
-    {
-      // we are tied with the previous client
-      level.clients[ level.sortedClients[ i - 1 ] ].ps.persistant[ PERS_RANK ] = rank;
-      level.clients[ level.sortedClients[ i ] ].ps.persistant[ PERS_RANK ] = rank;
-    }
-
-    score = newScore;
-  }
 
   // see if it is time to end the level
   CheckExitRules( );
@@ -1899,7 +1885,7 @@ void FindIntermissionPoint( void )
 
   if( !ent )
   { // the map creator forgot to put in an intermission point...
-    SelectSpawnPoint( vec3_origin, level.intermission_origin, level.intermission_angle );
+    G_SelectSpawnPoint( vec3_origin, level.intermission_origin, level.intermission_angle );
   }
   else
   {
@@ -3085,5 +3071,7 @@ void G_RunFrame( int levelTime )
 
     trap_Cvar_Set( "g_listEntity", "0" );
   }
+
+  level.frameMsec = trap_Milliseconds( );
 }
 

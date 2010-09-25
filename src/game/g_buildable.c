@@ -1240,7 +1240,7 @@ qboolean AHovel_Blocked( gentity_t *hovel, gentity_t *player, qboolean provideEx
     G_SetOrigin( player, origin );
     VectorCopy( origin, player->client->ps.origin );
     VectorCopy( vec3_origin, player->client->ps.velocity );
-    SetClientViewAngle( player, angles );
+    G_SetClientViewAngle( player, angles );
   }
 
   if( tr.fraction < 1.0f )
@@ -1320,7 +1320,7 @@ void AHovel_Use( gentity_t *self, gentity_t *other, gentity_t *activator )
 
       G_SetOrigin( activator, hovelOrigin );
       VectorCopy( hovelOrigin, activator->client->ps.origin );
-      SetClientViewAngle( activator, hovelAngles );
+      G_SetClientViewAngle( activator, hovelAngles );
     }
   }
 }
@@ -1413,7 +1413,7 @@ void AHovel_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
     G_SetOrigin( builder, newOrigin );
     VectorCopy( newOrigin, builder->client->ps.origin );
-    SetClientViewAngle( builder, newAngles );
+    G_SetClientViewAngle( builder, newAngles );
 
     //client leaves hovel
     builder->client->ps.stats[ STAT_STATE ] &= ~SS_HOVELING;

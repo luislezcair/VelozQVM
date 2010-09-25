@@ -4202,14 +4202,14 @@ static void G_LayoutBuildItem( buildable_t buildable, vec3_t origin,
 
  /*
  ============
-+G_InstantBuild
-+
-+This function is extremely similar to the few functions that place a 
-+buildable on map load. It exists because G_LayoutBuildItem takes a couple
-+of frames to finish spawning it, so it's not truly instant
-+Do not call this function immediately after the map loads - that's what
-+G_LayoutBuildItem is for.
-+============
+G_InstantBuild
+
+This function is extremely similar to the few functions that place a
+buildable on map load. It exists because G_LayoutBuildItem takes a couple
+of frames to finish spawning it, so it's not truly instant
+Do not call this function immediately after the map loads - that's what
+G_LayoutBuildItem is for.
+============
 */
 gentity_t *G_InstantBuild( buildable_t buildable, vec3_t origin, vec3_t angles, vec3_t origin2, vec3_t angles2 )
 {

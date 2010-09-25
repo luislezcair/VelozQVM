@@ -1500,7 +1500,7 @@ void G_CalculateBuildPoints( void )
             trap_Cvar_Set( "g_humanStage", va( "%d", S3 ) );
 
             //Give max credits
-            for( i = 0; i < MAX_CLIENTS; i++ )
+            for( i = 0; i < level.maxclients; i++ )
             {
                 if( level.clients[ i ].pers.teamSelection == PTE_ALIENS )
                     level.clients[ i ].ps.persistant[ PERS_CREDIT ] = 9;

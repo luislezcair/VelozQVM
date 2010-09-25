@@ -20,11 +20,11 @@
   <valuemap type="QVariantMap">
    <value key="ProjectExplorer.BuildConfiguration.DisplayName" type="QString">all</value>
    <valuelist key="abstractProcess.Environment" type="QVariantList">
-    <value type="QString">DBUS_SESSION_BUS_ADDRESS=unix:abstract=/tmp/dbus-FJTkdltCAL,guid=f1e28645c6c923ba9ec75cde4c9cd108</value>
+    <value type="QString">DBUS_SESSION_BUS_ADDRESS=unix:abstract=/tmp/dbus-GeAuXKtKh1,guid=a244707ac1966a848fb2a4884c9e16b8</value>
     <value type="QString">DESKTOP_SESSION=default</value>
     <value type="QString">DISPLAY=:0.0</value>
     <value type="QString">DM_CONTROL=/var/run/xdmctl</value>
-    <value type="QString">GPG_AGENT_INFO=/tmp/gpg-fUBPu0/S.gpg-agent:1397:1</value>
+    <value type="QString">GPG_AGENT_INFO=/tmp/gpg-IzHJup/S.gpg-agent:1332:1</value>
     <value type="QString">GS_LIB=/home/luis/.fonts</value>
     <value type="QString">GTK2_RC_FILES=/etc/gtk-2.0/gtkrc:/home/luis/.gtkrc-2.0:/home/luis/.gtkrc-2.0-kde4:/home/luis/.kde/share/config/gtkrc-2.0</value>
     <value type="QString">GTK_MODULES=canberra-gtk-module</value>
@@ -35,23 +35,22 @@
     <value type="QString">KDE_SESSION_UID=1000</value>
     <value type="QString">KDE_SESSION_VERSION=4</value>
     <value type="QString">LANG=es_AR.UTF-8</value>
-    <value type="QString">LANGUAGE=</value>
     <value type="QString">LD_LIBRARY_PATH=/usr/lib/qtcreator:</value>
     <value type="QString">LOGNAME=luis</value>
     <value type="QString">PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games</value>
     <value type="QString">PWD=/home/luis/Documentos</value>
     <value type="QString">QT_PLUGIN_PATH=/home/luis/.kde/lib/kde4/plugins/:/usr/lib/kde4/plugins/</value>
     <value type="QString">SAL_GTK_USE_PIXMAPPAINT=1</value>
-    <value type="QString">SESSION_MANAGER=local/Kassius:@/tmp/.ICE-unix/1536,unix/Kassius:/tmp/.ICE-unix/1536</value>
+    <value type="QString">SESSION_MANAGER=local/Kassius:@/tmp/.ICE-unix/1571,unix/Kassius:/tmp/.ICE-unix/1571</value>
     <value type="QString">SHELL=/bin/bash</value>
     <value type="QString">SHLVL=0</value>
-    <value type="QString">SSH_AGENT_PID=1396</value>
-    <value type="QString">SSH_AUTH_SOCK=/tmp/ssh-xMpTzi1351/agent.1351</value>
+    <value type="QString">SSH_AGENT_PID=1331</value>
+    <value type="QString">SSH_AUTH_SOCK=/tmp/ssh-sLdyIJ1227/agent.1227</value>
     <value type="QString">USER=luis</value>
-    <value type="QString">WINDOWPATH=7</value>
+    <value type="QString">WINDOWPATH=8</value>
     <value type="QString">XCURSOR_THEME=oxy-white</value>
     <value type="QString">XDG_DATA_DIRS=/usr/share:/usr/share:/usr/local/share</value>
-    <value type="QString">XDG_SESSION_COOKIE=267101884e3f56e57ff934e54bf72907-1285345542.90994-1293849383</value>
+    <value type="QString">XDG_SESSION_COOKIE=267101884e3f56e57ff934e54bf72907-1285428916.776464-1982089736</value>
     <value type="QString">XDM_MANAGED=method=classic</value>
    </valuelist>
    <valuelist key="abstractProcess.arguments" type="QVariantList">

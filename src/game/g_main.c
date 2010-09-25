@@ -1496,9 +1496,10 @@ void G_CalculateBuildPoints( void )
             trap_SendConsoleCommand( EXEC_NOW, "alienWin\n" );
   	    trap_SendConsoleCommand( EXEC_NOW, "humanWin\n" );
 
-            trap_Cvar_Set( "g_alienStage", "2" );
-            trap_Cvar_Set( "g_humanStage", "2" );
+            trap_Cvar_Set( "g_alienStage", va( "%d", S3 ) );
+            trap_Cvar_Set( "g_humanStage", va( "%d", S3 ) );
 
+            //Give max credits
             for( i = 0; i < MAX_CLIENTS; i++ )
             {
                 if( level.clients[ i ].pers.teamSelection == PTE_ALIENS )

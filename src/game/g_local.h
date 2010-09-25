@@ -314,7 +314,6 @@ typedef struct
   qboolean          teamLeader;         // true when this client is a team leader
   clientList_t      ignoreList;
   qboolean          invisible;          // for !invisible
-  qboolean          muted;              // for persistant !mute (devil)
 } clientSession_t;
 
 #define MAX_NETNAME       36
@@ -327,8 +326,6 @@ typedef struct connectionRecord_s
   int       clientCredit;
 
   int       ptrCode;
-
-  qboolean muted; // for persistant !mute (devil)
 } connectionRecord_t;
 
 typedef struct
@@ -413,7 +410,7 @@ typedef struct
   qboolean            designatedBuilder;
   statsCounters_t     statscounters;
   qboolean            healing;
-  //char                chat[ CHAT_MAXCHAN ][ CHAT_MAXPASS ];
+
   qboolean            ignoreAdminWarnings;
   int		      lastTeamStatus;
 

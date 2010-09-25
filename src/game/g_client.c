@@ -1531,12 +1531,6 @@ void ClientBegin( int clientNum )
   client->pers.teamState.state = TEAM_BEGIN;
   client->pers.classSelection = PCL_NONE;
 
-  if( client->pers.firstConnect == qfalse ) {
-    // Keep the mute
-    client->pers.muted = client->sess.muted;
-    client->pers.connection->muted = client->sess.muted;
-  }
-
   // save eflags around this, because changing teams will
   // cause this to happen with a valid entity, and we
   // want to make sure the teleport bit is set right

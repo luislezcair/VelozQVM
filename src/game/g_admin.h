@@ -136,6 +136,11 @@ typedef struct g_admin_namelog
   char      guid[ 33 ];
   int       slot;
   qboolean  banned;
+  qboolean  muted;
+  qboolean  denyBuild;
+  qboolean  forcespeced;
+  int       denyHumanWeapons;
+  int       denyAlienClasses;
 }
 g_admin_namelog_t;
 

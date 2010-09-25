@@ -1384,6 +1384,75 @@ void G_admin_namelog_update( gclient_t *client, qboolean disconnect )
       if( !disconnect )
         g_admin_namelog[ i ]->banned = qfalse;
 
+      //check other things like if user was denybuild or muted or denyweapon and restore them
+      if( !disconnect )
+      {
+        if( g_admin_namelog[ i ]->muted )
+        {
+            client->pers.muted = qtrue;
+            //client->pers.muteExpires = g_admin_namelog[ i ]->muteExpires;
+            G_AdminsPrintf( "^7%s^7's mute has been restored\n", client->pers.netname );
+            g_admin_namelog[ i ]->muted = qfalse;
+        }
+        if( g_admin_namelog[ i ]->denyBuild )
+        {
+            client->pers.denyBuild = qtrue;
+            G_AdminsPrintf( "^7%s^7's Denybuild has been restored\n", client->pers.netname );
+            g_admin_namelog[ i ]->denyBuild = qfalse;
+        }
+        if( g_admin_namelog[ i ]->denyHumanWeapons > 0 || g_admin_namelog[ i ]->denyAlienClasses > 0 )
+        {
+            if( g_admin_namelog[ i ]->denyHumanWeapons > 0 )
+                client->pers.denyHumanWeapons =  g_admin_namelog[ i ]->denyHumanWeapons;
+            if( g_admin_namelog[ i ]->denyAlienClasses > 0 )
+                client->pers.denyAlienClasses =  g_admin_namelog[ i ]->denyAlienClasses;
+
+            G_AdminsPrintf( "^7%s^7's Denyweapon has been restored\n", client->pers.netname );
+            g_admin_namelog[ i ]->denyHumanWeapons = 0;
+            g_admin_namelog[ i ]->denyAlienClasses = 0;
+        }
+        if( g_admin_namelog[ i ]->forcespeced )
+        {
+            client->pers.specd = qtrue;
+            G_AdminsPrintf( "^7%s^7's force specing has been restored\n", client->pers.netname );
+            g_admin_namelog[ i ]->forcespeced = qfalse;
+        }
+        /*
+        if( g_admin_namelog[ i ]->specExpires > 0 )
+        {
+            client->pers.specExpires = g_admin_namelog[ i ]->specExpires;
+            G_AdminsPrintf( "^7%s^7's Putteam spectator has been restored\n", client->pers.netname );
+            g_admin_namelog[ i ]->specExpires = 0;
+        }
+        */
+      }
+      else
+      {
+        //for mute
+        if( client->pers.muted )
+        {
+            g_admin_namelog[ i ]->muted = qtrue;
+            //g_admin_namelog[ i ]->muteExpires = client->pers.muteExpires;
+        }
+        //denybuild
+        if( client->pers.denyBuild )
+        {
+            g_admin_namelog[ i ]->denyBuild = qtrue;
+        }
+        //denyweapon humans
+        if( client->pers.denyHumanWeapons > 0 )
+        {
+            g_admin_namelog[ i ]->denyHumanWeapons = client->pers.denyHumanWeapons;
+        }
+        //denyweapon aliens
+        if( client->pers.denyAlienClasses > 0 )
+        {
+            g_admin_namelog[ i ]->denyAlienClasses = client->pers.denyAlienClasses;
+        }
+        //forcespec
+        g_admin_namelog[ i ]->forcespeced = client->pers.specd;
+      }
+
       return;
     }
   }
@@ -2729,8 +2798,6 @@ qboolean G_admin_mute( gentity_t *ent, int skiparg )
     }
 
     vic->client->pers.muted = qfalse;
-    vic->client->pers.connection->muted = qfalse;
-    vic->client->sess.muted = qfalse;
 
     CPx( pids[ 0 ], "cp \"^1You have been unmuted\"" );
     AP( va( "print \"^3!unmute: ^7%s^7 has been unmuted by %s\n\"",
@@ -2746,8 +2813,6 @@ qboolean G_admin_mute( gentity_t *ent, int skiparg )
     }
 
     vic->client->pers.muted = qtrue;
-    vic->client->pers.connection->muted = qtrue; //muted on reconnect
-    vic->client->sess.muted = qtrue; //muted on level change
 
     CPx( pids[ 0 ], "cp \"^1You've been muted\"" );
     AP( va( "print \"^3!mute: ^7%s^7 has been muted by ^7%s\n\"",
@@ -4573,8 +4638,7 @@ qboolean G_admin_forcespec( gentity_t *ent, int skiparg )
   int minargc;
   gentity_t *vic;
 
-
-    minargc = 2 + skiparg;
+  minargc = 2 + skiparg;
 
   if( G_SayArgc() < minargc )
   {
@@ -4592,32 +4656,33 @@ qboolean G_admin_forcespec( gentity_t *ent, int skiparg )
 
   vic = &g_entities[ pids[ 0 ] ];
 
- if ( vic->client->pers.specd == qtrue )
- {
- ADMP( "^3!forcespec: ^7player already forcespeced\n" );
-
-	return qfalse;
- }
+  if ( vic->client->pers.specd == qtrue )
+  {
+    ADMP( "^3!forcespec: ^7player already forcespeced\n" );
+    return qfalse;
+  }
  
- if( !admin_higher( ent, &g_entities[ pids[ 0 ] ] ) )
+  if( !admin_higher( ent, &g_entities[ pids[ 0 ] ] ) )
   {
     ADMP( "^3!forcespec: ^7sorry, but your intended victim has a higher admin"
         " level than you\n" );
     return qfalse;
   }
 
-//push them to the spec team
-G_ChangeTeam( vic, PTE_NONE );
-//tell g_cmds that they cannot join teams
-vic->client->pers.specd = qtrue;
-//tell the person they cant join teams
-CPx( pids[ 0 ], "cp \"^1you can no longer join teams\"" );
-//tell everyone that you cant join teams
-AP( va( "print \"^3!forcespec: ^7%s^7 has disallowed joining of teams for ^7%s\n\"", ( ent ) ? ent->client->pers.netname : "console", vic->client->pers.netname ) );
-//tell g_cmds to save their creds
-vic->client->pers.saved = qtrue;
-	return qtrue;
+  //push them to the spec team
+  G_ChangeTeam( vic, PTE_NONE );
 
+  //tell g_cmds that they cannot join teams
+  vic->client->pers.specd = qtrue;
+
+  CPx( pids[ 0 ], "cp \"^1You can no longer join teams\"" );
+  AP( va( "print \"^3!forcespec: ^7%s^7 has disallowed joining of teams for ^7%s\n\"",
+          ( ent ) ? ent->client->pers.netname : "console", vic->client->pers.netname ) );
+
+  //tell g_cmds to save their creds
+  vic->client->pers.saved = qtrue;
+
+  return qtrue;
 }
 
 qboolean G_admin_unforcespec( gentity_t *ent, int skiparg )
@@ -4627,8 +4692,7 @@ qboolean G_admin_unforcespec( gentity_t *ent, int skiparg )
   int minargc;
   gentity_t *vic;
 
-
-    minargc = 2 + skiparg;
+  minargc = 2 + skiparg;
 
   if( G_SayArgc() < minargc )
   {
@@ -4646,29 +4710,27 @@ qboolean G_admin_unforcespec( gentity_t *ent, int skiparg )
 
   vic = &g_entities[ pids[ 0 ] ];
 
- if ( vic->client->pers.specd == qfalse )
- {
- ADMP( "^3!unforcespec: ^7player is not forcespeced\n" );
+  if ( vic->client->pers.specd == qfalse )
+  {
+    ADMP( "^3!unforcespec: ^7player is not forcespeced\n" );
+    return qfalse;
+  }
 
-	return qfalse;
- }
-
-if( !admin_higher( ent, &g_entities[ pids[ 0 ] ] ) )
+  if( !admin_higher( ent, &g_entities[ pids[ 0 ] ] ) )
   {
     ADMP( "^3!forcespec: ^7sorry, but your intended victim has a higher admin"
         " level than you\n" );
     return qfalse;
   }
 
+  //remove the limitation
+  vic->client->pers.specd = qfalse;
 
-//remove the limitation
-vic->client->pers.specd = qfalse;
-//tell them it was removed
-CPx( pids[ 0 ], "cp \"^1you can now join teams\"" );
-//tell everyone that it was removed
-AP( va( "print \"^3!unforcespec: ^7%s^7 has allowed joining of teams for ^7%s\n\"", ( ent ) ? ent->client->pers.netname : "console", vic->client->pers.netname ) );
-	return qtrue;
+  CPx( pids[ 0 ], "cp \"^1You can now join teams\"" );
+  AP( va( "print \"^3!unforcespec: ^7%s^7 has allowed joining of teams for ^7%s\n\"",
+          ( ent ) ? ent->client->pers.netname : "console", vic->client->pers.netname ) );
 
+  return qtrue;
 }
 
 static qboolean G_admin_global_pause( gentity_t *ent, int skiparg )

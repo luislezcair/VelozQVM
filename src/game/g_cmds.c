@@ -4655,10 +4655,6 @@ void Cmd_PTRCVerify_f( gentity_t *ent )
 
     // restore mapping
     ent->client->pers.connection = connection;
-
-    // persistant !mute
-    ent->client->pers.muted = connection->muted;
-    ent->client->sess.muted = connection->muted;
   }
   else
   {
@@ -4736,10 +4732,6 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
         // set the correct credit
         ent->client->ps.persistant[ PERS_CREDIT ] = 0;
         G_AddCreditToClient( ent->client, connection->clientCredit, qtrue );
-
-        //persistant !mute
-        ent->client->pers.muted = connection->muted;
-        ent->client->sess.muted = connection->muted;
       }
     }
   }

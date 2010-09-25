@@ -4652,7 +4652,8 @@ void G_NobuildLoad( void )
     &f, FS_READ );
   if( len < 0 )
   {
-    G_Printf( "ERROR: nobuild for %s could not be opened\n", map );
+    //This is just spam
+    //G_Printf( "ERROR: nobuild for %s could not be opened\n", map );
     return;
   }
   nobuild = G_Alloc( len + 1 );

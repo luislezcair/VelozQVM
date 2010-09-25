@@ -1790,52 +1790,66 @@ void Cmd_CallVote_f( gentity_t *ent )
      !Q_stricmp( arg1, "suddendeath" ) ||
      !Q_stricmp( arg1, "sd" ))
    {
-     if(!g_suddenDeathVotePercent.integer)
+     if( !g_suddenDeathVotePercent.integer )
      {
        trap_SendServerCommand( ent-g_entities, "print \"Sudden Death votes have been disabled\n\"" );
        return;
      } 	  
      else if( g_suddenDeath.integer ) 
      {
-      trap_SendServerCommand( ent - g_entities, va( "print \"callvote: ""Sudden Death has already begun\n\"") );
+      trap_SendServerCommand( ent - g_entities, va( "print \"callvote: Sudden Death has already begun\n\"") );
       return;
      }
-    else 
+     else if( G_TimeTilSuddenDeath( ) <= g_suddenDeathVoteDelay.integer * 1000 )
      {
-     level.votePercentToPass = g_suddenDeathVotePercent.integer;	   
-     Com_sprintf( level.voteString, sizeof( level.voteString ), "g_suddenDeath 1" );
-     Com_sprintf( level.voteDisplayString,
-         sizeof( level.voteDisplayString ), "Begin sudden death" );
+        trap_SendServerCommand( ent - g_entities, va( "print \"callvote: Sudden Death is already immenent\n\"") );
+        return;
+     }
+     else
+     {
+        level.votePercentToPass = g_suddenDeathVotePercent.integer;
+        Com_sprintf( level.voteString, sizeof( level.voteString ), "suddendeath" );
+        Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ), "Begin sudden death" );
+
+        if( g_suddenDeathVoteDelay.integer )
+            Q_strcat( level.voteDisplayString, sizeof( level.voteDisplayString ),
+                      va( " in %d seconds", g_suddenDeathVoteDelay.integer ) );
      }
    }
   else if( !Q_stricmp( arg1, "extreme_sudden_death" ) ||
+           !Q_stricmp( arg1, "extremesuddendeath" ) ||
            !Q_stricmp( arg1, "esd" ))
   {
-  if( g_extremeSuddenDeath.integer )
-    {
-      trap_SendServerCommand( ent - g_entities,
-        "print \"callvote: the game is already in extreme sudden death\n\"" );
-      return;
-    }
-    else if( level.extremeSuddenDeathWarning == TW_IMMINENT )
-    {
-      trap_SendServerCommand( ent - g_entities,
-        "print \"callvote: it is too close to extreme sudden death\n\"" );
-      return;
-    }
-    else if ( !g_extremeSuddenDeathVotes.integer ) {
-    	trap_SendServerCommand( ent - g_entities,
-        "print \"callvote: Extreme Sudden Death votes have been disabled\n\"" );
-      return;
+    if ( !g_extremeSuddenDeathVotes.integer ) {
+        trap_SendServerCommand( ent - g_entities,
+              "print \"callvote: Extreme Sudden Death votes have been disabled\n\"" );
+         return;
     }
     else if (( g_extremeSuddenDeathVotes.integer == 2 ) && ( !g_suddenDeath.integer )) {
-	   	trap_SendServerCommand( ent - g_entities,
-	      "print \"callvote: Extreme Sudden Death votes can be called only during Sudden Death\n\"" );
+        trap_SendServerCommand( ent - g_entities,
+              "print \"callvote: Extreme Sudden Death votes can be called only during Sudden Death\n\"" );
+        return;
+    }
+    else if( g_extremeSuddenDeath.integer )
+    {
+      trap_SendServerCommand( ent - g_entities,
+        "print \"callvote: the game is already in Extreme Sudden Death\n\"" );
       return;
     }
-    level.votePercentToPass = g_suddenDeathVotePercent.integer;
-    Com_sprintf( level.voteString, sizeof( level.voteString ), "g_extremeSuddenDeath 1" );
-    Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ), "Begin extreme sudden death" );
+    else if( G_TimeTilExtremeSuddenDeath( ) <= g_extremeSuddenDeathVoteDelay.integer * 1000 )
+    {
+      trap_SendServerCommand( ent - g_entities,
+        "print \"callvote: Extreme Sudden Death is already inminent\n\"" );
+      return;
+    }
+    else
+        level.votePercentToPass = g_suddenDeathVotePercent.integer;
+        Com_sprintf( level.voteString, sizeof( level.voteString ), "extremesuddendeath" );
+        Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ), "Begin Extreme Sudden Death" );
+
+        if( g_extremeSuddenDeathVoteDelay.integer )
+            Q_strcat( level.voteDisplayString, sizeof( level.voteDisplayString ),
+                      va( " in %d seconds", g_extremeSuddenDeathVoteDelay.integer ) );
   }
   else if( !Q_stricmp( arg1, "extend" ) )
   {

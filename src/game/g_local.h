@@ -739,10 +739,12 @@ typedef struct
   int               suddenDeathABuildPoints;
   int               suddenDeathHBuildPoints;
   qboolean          suddenDeath;
+  qboolean          suddenDeathBeginTime;
+  qboolean          extremeSuddenDeathBeginTime;
 
   timeWarning_t     suddenDeathWarning;
-  timeWarning_t     timelimitWarning;
   timeWarning_t     extremeSuddenDeathWarning;
+  timeWarning_t     timelimitWarning;
 
   spawnQueue_t      alienSpawnQueue;
   spawnQueue_t      humanSpawnQueue;
@@ -1337,6 +1339,8 @@ extern  vmCvar_t  g_blood;
 extern  vmCvar_t  g_allowVote;
 extern  vmCvar_t  g_voteLimit;
 extern  vmCvar_t  g_suddenDeathVotePercent;
+extern  vmCvar_t  g_suddenDeathVoteDelay;
+extern  vmCvar_t  g_extremeSuddenDeathVoteDelay;
 extern  vmCvar_t  g_pollVotes;
 extern  vmCvar_t  g_extendVotesPercent;
 extern  vmCvar_t  g_extendVotesTime;
@@ -1449,8 +1453,8 @@ extern  vmCvar_t  g_buyAll;
 extern  vmCvar_t  g_multipleWeapons;
 extern  vmCvar_t  g_devmapVotes;
 
-extern vmCvar_t  g_slapKnockback;
-extern vmCvar_t  g_slapDamage;
+extern  vmCvar_t  g_slapKnockback;
+extern  vmCvar_t  g_slapDamage;
 
 extern  vmCvar_t g_practiceText;
 extern  vmCvar_t g_practiceCount;
@@ -1472,8 +1476,8 @@ extern	vmCvar_t  g_randomLayoutPercent;
 
 extern  vmCvar_t  g_healShove;
 
-extern	vmCvar_t	g_randomMaps;
-extern	vmCvar_t	g_randomMapList;
+extern	vmCvar_t  g_randomMaps;
+extern	vmCvar_t  g_randomMapList;
 /*
 extern  vmCvar_t  g_modBuildableHealth;  // Buildable health
 extern  vmCvar_t  g_modBuildableSpeed;   // Buildable fire rate

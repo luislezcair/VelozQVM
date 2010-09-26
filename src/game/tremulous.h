@@ -596,7 +596,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define STAMINA_SPRINT_TAKE         6
 #define STAMINA_LARMOUR_TAKE        4
-#define STAMINA_BSUIT_TAKE          1
+#define STAMINA_BSUIT_TAKE          2
 #define STAMINA_JUMP_TAKE           300
 
 #define HUMAN_SPAWN_REPEAT_TIME     10000

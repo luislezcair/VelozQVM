@@ -3751,96 +3751,128 @@ qboolean G_admin_help( gentity_t *ent, int skiparg )
   }
 }
 
+void G_Unescape( char *input, char *output, int len );
+qboolean G_StringReplaceCvars( char *input, char *output, int len );
+
 qboolean G_admin_info( gentity_t *ent, int skiparg )
 {
+  fileHandle_t infoFile;
   int length;
-  char filename[ MAX_OSPATH ], infoname[32]; 
-  char info[ MAX_STRING_CHARS ], message[ MAX_STRING_CHARS ];
-  fileHandle_t handle;
-  if( G_SayArgc() < 2 + skiparg ) //if no subject use default
-    Q_strncpyz( infoname, "default", 8 );
-  else //what subject?
-    G_SayArgv( 1 + skiparg, infoname, sizeof( infoname ) );
-
-  Com_sprintf( filename, MAX_OSPATH, "info/info-%s.txt", infoname );
-  length = trap_FS_FOpenFile( filename, &handle, FS_READ );
-  if( !handle || !length ) //file not found or length 0
-  {
-    if( Q_stricmp( infoname, "default" ) )
-      ADMP( va( "^3!info: %s not found, using default\n", infoname ) );
-    length = trap_FS_FOpenFile( "info/info-default.txt", &handle, FS_READ );
-  }
-  if( handle && length ) //we have something printable
-  {
-    if( length > MAX_STRING_CHARS ) length = MAX_STRING_CHARS;
-    trap_FS_Read( message, length, handle );
-    trap_FS_FCloseFile( handle );
-    message[length] = '\0';
-    G_admin_info_parse( message, info, MAX_STRING_CHARS );
-    ADMP( va( "%s\n", info ) );
-  } 
+  char filename[ MAX_OSPATH ], message[ MAX_STRING_CHARS ];
+  if( G_SayArgc() == 2 + skiparg )
+    G_SayArgv( 1 + skiparg, filename, sizeof( filename ) );
+  else if( G_SayArgc() == 1 + skiparg )
+    Q_strncpyz( filename, "default", sizeof( filename ) );
   else
   {
-    ADMP( "^3!info: no server info found\n" );
+    ADMP( "^3!info: ^7usage: ^3!info ^7(^5subject^7)\n" );
     return qfalse;
-  } //FAIL
-  return qtrue;
+  }
+  Com_sprintf( filename, sizeof( filename ), "info/info-%s.txt", filename );
+  length = trap_FS_FOpenFile( filename, &infoFile, FS_READ );
+  if( length <= 0 || !infoFile )
+  {
+    trap_FS_FCloseFile( infoFile );
+    ADMP( "^3!info: ^7no relevant information is available\n" );
+    return qfalse;
+  }
+  else
+  {
+    int i;
+    char *cr;
+    trap_FS_Read( message, sizeof( message ), infoFile );
+    if( length < sizeof( message ) )
+      message[ length ] = '\0';
+    else
+      message[ sizeof( message ) - 1 ] = '\0';
+    trap_FS_FCloseFile( infoFile );
+    // strip carriage returns for windows platforms
+    while( ( cr = strchr( message, '\r' ) ) )
+      memmove( cr, cr + 1, strlen( cr + 1 ) + 1 );
+#define MAX_INFO_PARSE_LOOPS 100
+    for( i = 0; i < MAX_INFO_PARSE_LOOPS &&
+        G_StringReplaceCvars( message, message, sizeof( message ) ); i++ );
+    G_Unescape( message, message, sizeof( message ) );
+    if( i == MAX_INFO_PARSE_LOOPS )
+      G_Printf( S_COLOR_YELLOW "WARNING: %s exceeds MAX_INFO_PARSE_LOOPS\n", filename );
+    ADMP( va( "%s\n", message ) );
+    return qtrue;
+  }
 }
 
-void G_admin_info_parse( char *unparsed, char *dest, int maxlength )
-{ //get unparsed, turn ${cvar} into value and do some escapes, 
-  //write maxlength chars to dest (including null-termination),
-  //so only maxlength - 1 of useful stuff
-  //not necessarily just for !info, needs more general name (and location)
-  //do _not_ call this function with src == dest
-  char cvarName[ 64 ], cvarValue[ MAX_CVAR_VALUE_STRING ];
-  char parsedValue[ MAX_CVAR_VALUE_STRING ];
-  int i, j, cursor = 0; //i is our position in dest, cursor in unparsed
-  for( i = 0; cursor <= strlen( unparsed ) && i < maxlength; i++ ) 
-  { //until we run out of space or unparsed
-    if( unparsed[cursor] == '\\' )
-    { //some escaping
-      if( unparsed[cursor + 1] == 'n' )
-      {
-	dest[i] = '\n';
-        cursor++; //skip over this next loop
-      }
-      else if( unparsed[cursor + 1] == '\\' )
-      {
-	dest[i] = '\\';
-	cursor++; //skip me
-      }
-      else if( unparsed[cursor + 1] == '$' )
-      {
-	dest[i] = '$';
-	cursor++; //skip me
-      }
-    }
-    else if( unparsed[cursor] == '\r' )
+void G_Unescape( char *input, char *output, int len )
+{
+  // \n -> newline, \%c -> %c
+  // output is terminated at output[len - 1]
+  // it's OK for input to equal output, because our position in input is always
+  // equal or greater than our position in output
+  // however, if output is later in the same string as input, a crash is pretty
+  // much inevitable
+  int i, j;
+  for( i = j = 0; input[i] && j + 1 < len; i++, j++ )
+  {
+    if( input[i] == '\\' )
     {
-      i--; // skip unprintable characters for this cycle
-    }
-    else if( unparsed[cursor] == '$' )
-    { //read variable
-      if( unparsed[1+cursor++] == '{' ) cursor++; // skip $ and { if there
-      for( j = 0; j < 64 && unparsed[cursor] != '}' && 
-	   unparsed[cursor] != ' '; j++ )
-      { //read into cvarName until } or space
-	cvarName[ j ] = unparsed[cursor++];
+      if( !input[++i] )
+      {
+        output[j] = '\0';
+        return;
       }
-      cvarName[ j ] = '\0'; //YOU ARE TERMINATED
-      trap_Cvar_VariableStringBuffer( cvarName, cvarValue, 
-	                              MAX_CVAR_VALUE_STRING );
-      //erk recursion, possible high CPU use?
-      G_admin_info_parse( cvarValue, parsedValue, MAX_STRING_CHARS ); 
-      Com_sprintf( dest, maxlength, "%s%s", dest, parsedValue ); 
-      i += strlen( parsedValue ) - 1; //-1 so we overwrite the null-termination
+      else if( input[i] == 'n' )
+        output[j] = '\n';
+      else
+        output[j] = input[i];
     }
     else
-      dest[i] = unparsed[cursor]; //nothing special so just copy it
-    cursor++; //move to the next unparsed
+      output[j] = input[i];
   }
-  dest[ maxlength ] = '\0'; //I NEED YOUR CLOTHES YOUR BOOTS AND YOUR MOTORCYCLE
+  output[j] = '\0';
+}
+
+qboolean G_StringReplaceCvars( char *input, char *output, int len )
+{
+  int i, outNum = 0;
+  char cvarName[ 64 ], cvarValue[ MAX_CVAR_VALUE_STRING ];
+  char *outputBuffer;
+  qboolean doneAnything = qfalse;
+  if( len <= 0 )
+    return qfalse;
+  // use our own internal buffer in case output == input
+  outputBuffer = G_Alloc( len );
+  len -= 1; // fit in a terminator
+  while( *input && outNum < len )
+  {
+    if( *input == '\\' && input[1] && outNum < len - 1 )
+    {
+      outputBuffer[ outNum++ ] = *input++;
+      outputBuffer[ outNum++ ] = *input++;
+    }
+    else if( *input == '$' )
+    {
+      doneAnything = qtrue;
+      input++;
+      if( *input == '{' )
+        input++;
+      for( i = 0; *input && ( isalnum( *input ) || *input == '_' ) &&
+          i < 63; i++ )
+        cvarName[ i ] = *input++;
+      cvarName[ i ] = '\0';
+      if( *input == '}' )
+        input++;
+      trap_Cvar_VariableStringBuffer( cvarName, cvarValue, sizeof( cvarValue ) );
+      if( cvarValue[ 0 ] )
+      {
+        for( i = 0; cvarValue[ i ] && outNum < len; i++ )
+          outputBuffer[ outNum++ ] = cvarValue[ i ];
+      }
+    }
+    else
+      outputBuffer[ outNum++ ] = *input++;
+  }
+  outputBuffer[ outNum ] = '\0';
+  Q_strncpyz( output, outputBuffer, len );
+  G_Free( outputBuffer );
+  return doneAnything;
 }
 
 qboolean G_admin_admintest( gentity_t *ent, int skiparg )

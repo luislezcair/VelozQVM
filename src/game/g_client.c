@@ -1379,6 +1379,7 @@ char *ClientConnect( int clientNum, qboolean firstTime )
   char      ip[ 16 ] = {""};
   char      reason[ MAX_STRING_CHARS ] = {""};
   int       i;
+  char countryName[ MAX_COUNTRY_LENGTH ];
 
   ent = &g_entities[ clientNum ];
 
@@ -1477,8 +1478,6 @@ char *ClientConnect( int clientNum, qboolean firstTime )
   if( client->sess.invisible != qtrue ) {
   // don't do the "xxx connected" messages if they were caried over from previous level
     if( firstTime ) {
-        char countryName[100];
-
         if( trap_GeoIP_GetCountryName( client->pers.ip, countryName ) )
             trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " connected from %s\n\"", client->pers.netname, countryName ) );
         else

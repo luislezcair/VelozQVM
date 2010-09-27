@@ -257,11 +257,10 @@ void trap_SendGameStat( const char *data )
   return;
 }
 
-//Devils:
 void trap_GeoIP_GetCountryName( const char* ip_address, char* dest )
 {
-	syscall( G_GEOIP_GETCOUNTRYNAME, ip_address, dest );
-        return;
+  syscall( G_GEOIP_GETCOUNTRYNAME, ip_address, dest );
+  return;
 }
 
 int trap_Parse_AddGlobalDefine( char *define )

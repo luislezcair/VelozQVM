@@ -1344,8 +1344,7 @@ void G_admin_namelog_update( gclient_t *client, qboolean disconnect )
   g_admin_namelog_t *namelog;
   char n1[ MAX_NAME_LENGTH ];
   char n2[ MAX_NAME_LENGTH ];
-  
-  char countryName[ 100 ];
+  char countryName[ MAX_COUNTRY_LENGTH ];
   
   int clientNum = ( client - level.clients );
 
@@ -1467,11 +1466,12 @@ void G_admin_namelog_update( gclient_t *client, qboolean disconnect )
     namelog->name[ j ][ 0 ] = '\0';
   Q_strncpyz( namelog->ip, client->pers.ip, sizeof( namelog->ip ) );
   Q_strncpyz( namelog->guid, client->pers.guid, sizeof( namelog->guid ) );
-  Q_strncpyz( namelog->name[ 0 ], client->pers.netname,
-    sizeof( namelog->name[ 0 ] ) );
+  Q_strncpyz( namelog->name[ 0 ], client->pers.netname, sizeof( namelog->name[ 0 ] ) );
   
-  trap_GeoIP_GetCountryName( client->pers.ip, countryName ) ?
-  	Q_strncpyz( namelog->country, countryName, sizeof( countryName ) ) : Q_strncpyz( namelog->country, "N/A", 4 );
+  if( trap_GeoIP_GetCountryName( client->pers.ip, countryName ) )
+      Q_strncpyz( namelog->country, countryName, sizeof( countryName ) );
+  else
+      Q_strncpyz( namelog->country, "N/N", 4 );
   
   namelog->slot = ( disconnect ) ? -1 : clientNum;
   g_admin_namelog[ i ] = namelog;
@@ -4296,10 +4296,11 @@ qboolean G_admin_namelog( gentity_t *ent, int skiparg )
     guid_stub[ j ] = '\0';
     if( g_admin_namelog[ i ]->slot > -1 )
        ADMBP( "^3" );
-    ADMBP( va( "%-2s (*%s) %15s ^5%s^7", 
+    ADMBP( va( "%-2s (*%s) %15s ^5%s^7",
       (g_admin_namelog[ i ]->slot > -1 ) ?
         va( "%d", g_admin_namelog[ i ]->slot ) : "-",
-      guid_stub, g_admin_namelog[ i ]->ip, g_admin_namelog[ i ]->country ) );
+      guid_stub, g_admin_namelog[ i ]->ip,
+      g_admin_namelog[ i ]->country ) );
     for( j = 0; j < MAX_ADMIN_NAMELOG_NAMES && 
       g_admin_namelog[ i ]->name[ j ][ 0 ]; j++ )
     {

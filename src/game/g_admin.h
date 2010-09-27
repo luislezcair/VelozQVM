@@ -124,7 +124,6 @@ typedef struct g_admin_command
   char exec[ MAX_QPATH ];
   char desc[ 50 ];
   char flag[ MAX_ADMIN_FLAG_LEN ];
-//  int levels[ MAX_ADMIN_LEVELS + 1 ];
 }
 g_admin_command_t;
 
@@ -132,7 +131,7 @@ typedef struct g_admin_namelog
 {
   char      name[ MAX_ADMIN_NAMELOG_NAMES ][MAX_NAME_LENGTH ];
   char      ip[ 16 ];
-  char	    country[ 100 ];
+  char	    country[ 50 ];
   char      guid[ 33 ];
   int       slot;
   qboolean  banned;

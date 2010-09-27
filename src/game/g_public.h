@@ -223,9 +223,8 @@ typedef enum {
   G_PARSE_SOURCE_FILE_AND_LINE,
 
   G_SEND_GAMESTAT,
-  
-  //Devils:
-  G_GEOIP_GETCOUNTRYNAME
+  G_GEOIP_GETCOUNTRYNAME,
+  G_DEMO_COMMAND
 } gameImport_t;
 
 

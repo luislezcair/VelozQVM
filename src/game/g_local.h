@@ -316,7 +316,8 @@ typedef struct
   qboolean          invisible;          // for !invisible
 } clientSession_t;
 
-#define MAX_NETNAME       36
+#define MAX_NETNAME        36
+#define MAX_COUNTRY_LENGTH 50
 
 // data to store details of clients that have abnormally disconnected
 typedef struct connectionRecord_s

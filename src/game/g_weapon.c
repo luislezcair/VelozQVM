@@ -678,50 +678,45 @@ TESLA GENERATOR
 */
 
 
-void teslaFire( gentity_t *ent )
+void teslaFire( gentity_t *self )
 {
   trace_t   tr;
-  vec3_t    end;
-  gentity_t *traceEnt, *tent;
+  vec3_t    origin, target;
+  gentity_t *tent;
 
-  VectorMA( muzzle, TESLAGEN_RANGE, forward, end );
+  if( !self->enemy )
+      return;
 
-  trap_Trace( &tr, muzzle, NULL, NULL, end, ent->s.number, MASK_SHOT );
+  // Move the muzzle from the entity origin up a bit to fire over turrets
+  VectorMA( muzzle, self->r.maxs[ 2 ], self->s.origin2, origin );
 
-  if( tr.entityNum == ENTITYNUM_NONE )
+  // Don't aim for the center, aim at the top of the bounding box
+  VectorCopy( self->enemy->s.origin, target );
+  target[ 2 ] += self->enemy->r.maxs[ 2 ];
+
+  // Trace to the target entity
+  trap_Trace( &tr, origin, NULL, NULL, target, self->s.number, MASK_SHOT );
+  if( tr.entityNum != self->enemy->s.number )
     return;
 
-  traceEnt = &g_entities[ tr.entityNum ];
+  // Client side firing effect
+  self->s.eFlags |= EF_FIRING;
 
-  if( !traceEnt->client )
-    return;
-
-  if( traceEnt->client && traceEnt->client->ps.stats[ STAT_PTEAM ] != PTE_ALIENS &&
-     !traceEnt->client->pers.bleeder )
-    return;
-
-  //so the client side knows
-  ent->s.eFlags |= EF_FIRING;
-
-  if( traceEnt->takedamage )
+  // Deal damage
+  if( self->enemy->takedamage )
   {
-    G_Damage( traceEnt, ent, ent, forward, tr.endpos,
+    vec3_t dir;
+
+    VectorSubtract( target, origin, dir );
+    G_Damage( self->enemy, self, self, dir, tr.endpos,
       TESLAGEN_DMG, 0, MOD_TESLAGEN );
   }
 
-  // snap the endpos to integers to save net bandwidth, but nudged towards the line
-  SnapVectorTowards( tr.endpos, muzzle );
-
-  // send railgun beam effect
+  // Send tesla zap trail
   tent = G_TempEntity( tr.endpos, EV_TESLATRAIL );
 
-  VectorCopy( muzzle, tent->s.origin2 );
-
-  tent->s.generic1 = ent->s.number; //src
-  tent->s.clientNum = traceEnt->s.number; //dest
-
-  // move origin a bit to come closer to the drawn gun muzzle
-  VectorMA( tent->s.origin2, 28, up, tent->s.origin2 );
+  tent->s.generic1 = self->s.number; //src
+  tent->s.clientNum = self->enemy->s.number; //dest
 }
 
 

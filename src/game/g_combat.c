@@ -146,7 +146,6 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
   if( self->client->ps.pm_type == PM_DEAD )
     return;
   
-  //if( attacker != self && attacker->client->ps.stats[ STAT_PTEAM ]  == self->client->ps.stats[ STAT_PTEAM ] )
   if(attacker->client && attacker != self && attacker->client->ps.stats[ STAT_PTEAM ]  == self->client->ps.stats[ STAT_PTEAM ] )
   {
     attacker->client->pers.statscounters.teamkills++;

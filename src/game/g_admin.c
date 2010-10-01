@@ -316,6 +316,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
       "(^5start at ban#^7|name|IP)"
     },
 
+    {"slap", G_admin_slap, "slap",
+      "Do damage to a player, and send them flying",
+      "[^3name|slot^7] (damage)"
+    },
+
     {"spec999", G_admin_spec999, "spec999",
       "move 999 pingers to the spectator team",
       ""},
@@ -1292,6 +1297,25 @@ qboolean G_admin_cmd_check( gentity_t *ent, qboolean say )
 
     if( G_admin_permission( ent, g_admin_commands[ i ]->flag ) )
     {
+      int j;
+
+      trap_Cvar_Register( NULL, "arg_all", "", CVAR_TEMP | CVAR_ROM | CVAR_USER_CREATED );
+      trap_Cvar_Set( "arg_all", G_SayConcatArgs( skip + 1 ) );
+
+      trap_Cvar_Register( NULL, "arg_count", "", CVAR_TEMP | CVAR_ROM | CVAR_USER_CREATED );
+      trap_Cvar_Set( "arg_count", va( "%i", G_SayArgc() - ( skip + 1 ) ) );
+
+      trap_Cvar_Register( NULL, "arg_client", "", CVAR_TEMP | CVAR_ROM | CVAR_USER_CREATED );
+      trap_Cvar_Set( "arg_client", ( ent ) ? ent->client->pers.netname : "console" );
+
+      for (j = G_SayArgc() - ( skip + 1 ); j; j--)
+      {
+        char this_arg[ MAX_CVAR_VALUE_STRING ];
+        trap_Cvar_Register( NULL, va( "arg_%i", j ), "", CVAR_TEMP | CVAR_ROM | CVAR_USER_CREATED );
+        G_SayArgv( j + skip, this_arg, sizeof( this_arg ) );
+        trap_Cvar_Set( va( "arg_%i", j ), this_arg );
+      }
+
       trap_SendConsoleCommand( EXEC_APPEND, g_admin_commands[ i ]->exec );
       admin_log( ent, cmd, skip );
       G_admin_adminlog_log( ent, cmd, NULL, skip, qtrue );
@@ -1489,7 +1513,6 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
   char *cnf, *cnf2;
   char *t;
   qboolean level_open, admin_open, ban_open, command_open;
-  char levels[ MAX_STRING_CHARS ] = {""};
 
   G_admin_cleanup();
 
@@ -4557,6 +4580,99 @@ qboolean G_admin_putmespec( gentity_t *ent, int skiparg )
   }
 
   AP( va("print \"^3!specme: ^7%s^7 decided to join the spectators\n\"", ent->client->pers.netname ) );
+  return qtrue;
+}
+
+qboolean G_admin_slap( gentity_t *ent, int skiparg )
+{
+  int pids[ MAX_CLIENTS ];
+  char name[ MAX_NAME_LENGTH ], err[ MAX_STRING_CHARS ];
+  gentity_t *vic;
+  vec3_t dir;
+
+  if( level.intermissiontime ) return qfalse;
+
+  if( G_SayArgc() < 2 + skiparg )
+  {
+    ADMP( "^3!slap: ^7usage: !slap [name|slot#]\n" );
+    return qfalse;
+  }
+
+  G_SayArgv( 1 + skiparg, name, sizeof( name ) );
+  if( G_ClientNumbersFromString( name, pids ) != 1 )
+  {
+    G_MatchOnePlayer( pids, err, sizeof( err ) );
+    ADMP( va( "^3!slap: ^7%s\n", err ) );
+    return qfalse;
+  }
+
+  vic = &g_entities[ pids[ 0 ] ];
+  if( !vic )
+  {
+    ADMP( "^3!slap: ^7bad target\n" );
+    return qfalse;
+  }
+  if( vic == ent )
+  {
+    ADMP( "^3!slap: ^7sorry, you cannot slap yourself\n" );
+    return qfalse;
+  }
+  if( !admin_higher( ent, vic ) )
+  {
+    ADMP( "^3!slap: ^7sorry, but your intended victim has a higher admin"
+          " level than you\n" );
+    return qfalse;
+  }
+  if( vic->client->pers.teamSelection == PTE_NONE ||
+      vic->client->pers.classSelection == PCL_NONE )
+  {
+    ADMP( "^3!slap: ^7can't slap spectators\n" );
+    return qfalse;
+  }
+
+  // knockback in a random direction
+  dir[0] = crandom();
+  dir[1] = crandom();
+  dir[2] = random();
+  G_Knockback( vic, dir, g_slapKnockback.integer );
+
+  trap_SendServerCommand( vic-g_entities,
+    va( "cp \"%s^7 is not amused\n\"",
+        ( ent ) ? ent->client->pers.netname : "console" ) );
+
+  if( g_slapDamage.integer > 0 )
+  {
+    int damage;
+
+    if( G_SayArgc() > 2 + skiparg )
+    {
+      char dmg_str[ MAX_STRING_CHARS ];
+      G_SayArgv( 2 + skiparg, dmg_str, sizeof( dmg_str ) );
+      damage = atoi(dmg_str);
+      if( damage < 0 ) damage = 0;
+    }
+    else
+    {
+      if( g_slapDamage.integer > 100 ) g_slapDamage.integer = 100;
+      damage = BG_FindHealthForClass( vic->client->ps.stats[ STAT_PCLASS ] ) *
+        g_slapDamage.integer / 100;
+      if( damage < 1 ) damage = 1;
+    }
+
+    vic->health -= damage;
+    vic->client->ps.stats[ STAT_HEALTH ] = vic->health;
+    vic->lastDamageTime = level.time;
+    if( vic->health <= 0 )
+    {
+      vic->flags |= FL_NO_KNOCKBACK;
+      vic->enemy = &g_entities[ pids[ 0 ] ];
+      vic->die( vic, ent, ent, damage, MOD_SLAP );
+    }
+    else if( vic->pain )
+    {
+      vic->pain( vic, &g_entities[ pids[ 0 ] ], damage );
+    }
+  }
   return qtrue;
 }
 

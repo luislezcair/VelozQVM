@@ -176,6 +176,8 @@ qboolean G_admin_name_check( gentity_t *ent, char *name, char *err, int len );
 void G_admin_namelog_update( gclient_t *ent, qboolean disconnect );
 int G_admin_level( gentity_t *ent );
 
+char* G_admin_adminPrintName( gentity_t *ent );
+
 // ! command functions
 qboolean G_admin_time( gentity_t *ent, int skiparg );
 qboolean G_admin_setlevel( gentity_t *ent, int skiparg );
@@ -249,6 +251,7 @@ qboolean G_admin_nobuildsave( gentity_t *ent, int skiparg );
 qboolean G_admin_lockname( gentity_t *ent, int skiparg );
 
 qboolean G_admin_explode( gentity_t *ent, int skiparg );
+qboolean G_admin_slap( gentity_t *ent, int skiparg );
 
 qboolean G_admin_invisible( gentity_t *ent, int skiparg );
 

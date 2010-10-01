@@ -2364,13 +2364,6 @@ Think function for Tesla Generator
 */
 void HTeslaGen_Think( gentity_t *self )
 {
-  int       entityList[ MAX_GENTITIES ];
-  vec3_t    range;
-  vec3_t    mins, maxs;
-  vec3_t    dir;
-  int       i, num;
-  gentity_t *enemy;
-
   self->nextthink = level.time + BG_FindNextThinkForBuildable( self->s.modelindex );
 
   //if not powered don't do anything and check again for power next think
@@ -2383,36 +2376,31 @@ void HTeslaGen_Think( gentity_t *self )
 
   if( self->spawned && self->count < level.time )
   {
-    //used to mark client side effects
+    vec3_t range, mins, maxs;
+    int entityList[ MAX_GENTITIES ], i, num;
+
+    //Communicates firing state to client
     self->s.eFlags &= ~EF_FIRING;
 
     VectorSet( range, TESLAGEN_RANGE, TESLAGEN_RANGE, TESLAGEN_RANGE );
     VectorAdd( self->s.origin, range, maxs );
     VectorSubtract( self->s.origin, range, mins );
 
-    //find aliens
+    //Attack nearby Aliens
     num = trap_EntitiesInBox( mins, maxs, entityList, MAX_GENTITIES );
     for( i = 0; i < num; i++ )
     {
-      enemy = &g_entities[ entityList[ i ] ];
+        self->enemy = &g_entities[ entityList[ i ] ];
+        if( self->enemy->client && self->enemy->health > 0 &&
+            (self->enemy->client->ps.stats [ STAT_PTEAM ] == PTE_ALIENS ||
+             self->enemy->client->pers.bleeder ) &&
+            Distance( self->enemy->s.pos.trBase,
+                      self->s.pos.trBase ) <= TESLAGEN_RANGE )
 
-      if( enemy->flags & FL_NOTARGET )
-	continue;
-
-      if( enemy->client &&
-          ( enemy->client->ps.stats[ STAT_PTEAM ] == PTE_ALIENS || enemy->client->pers.bleeder ) &&
-          enemy->health > 0 && !enemy->client->pers.paused &&
-          !level.paused &&
-          Distance( enemy->s.pos.trBase, self->s.pos.trBase ) <= TESLAGEN_RANGE )
-      {
-        VectorSubtract( enemy->s.pos.trBase, self->s.pos.trBase, dir );
-        VectorNormalize( dir );
-        vectoangles( dir, self->turretAim );
-
-        //fire at target
-        FireWeapon( self );
-      }
+          FireWeapon( self );
     }
+
+    self->enemy = NULL;
 
     if( self->s.eFlags & EF_FIRING )
     {

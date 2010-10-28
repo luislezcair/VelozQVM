@@ -38,7 +38,7 @@ static char g_bfb[ 32000 ];
 // note: list ordered alphabetically
 g_admin_cmd_t g_admin_cmds[ ] = 
   {
-    {"adjustban", G_admin_adjustban, "ban",
+    {"adjustban", G_admin_adjustban, "adjustban",
       "change the length or reason of a ban.  time is specified as numbers "
       "followed by units 'w' (weeks), 'd' (days), 'h' (hours) or 'm' (minutes),"
       " or seconds if no units are specified",
@@ -311,7 +311,7 @@ g_admin_cmd_t g_admin_cmds[ ] =
       "[^3name|slot#|admin#^7] [^3level^7]"
     },
 
-    {"showbans", G_admin_showbans, "showbans",
+    {"showbans", G_admin_showbans, "ban",
       "display a (partial) list of active bans.",
       "(^5start at ban#^7|name|IP)"
     },
@@ -3744,7 +3744,7 @@ qboolean G_admin_help( gentity_t *ent, int skiparg )
         ADMBP( va( " ^3Function: ^7%s\n", g_admin_cmds[ i ].function ) );
         ADMBP( va( " ^3Syntax: ^7!%s %s\n", g_admin_cmds[ i ].keyword,
                  g_admin_cmds[ i ].syntax ) );
-        ADMBP( va( " ^3Flag: ^7'%c'\n", g_admin_cmds[ i ].flag[ 0 ] ) );
+        ADMBP( va( " ^3Flag: ^7'%s'\n", g_admin_cmds[ i ].flag ) );
         ADMBP_end();
         return qtrue;
       }

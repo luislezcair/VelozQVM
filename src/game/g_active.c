@@ -451,8 +451,7 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
     G_TouchTriggers( ent );
     trap_UnlinkEntity( ent );
 
-    if( ( attack1 ) && ( client->ps.pm_flags & PMF_QUEUED ) )
-//      !level.mapRotationVoteTime )
+    if( attack1 && ( client->ps.pm_flags & PMF_QUEUED ) )
     {
         if( client->ps.stats[ STAT_PTEAM ] == PTE_ALIENS )
             G_RemoveFromSpawnQueue( &level.alienSpawnQueue, client->ps.clientNum );
@@ -463,7 +462,7 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
         client->ps.stats[ STAT_PCLASS ] = PCL_NONE;
     }
 
-    if( attack1 && client->pers.classSelection == PCL_NONE )
+    if( attack1 && client->pers.classSelection == PCL_NONE && !level.mapRotationVoteTime )
     {
         if( client->pers.teamSelection == PTE_NONE )
             G_TriggerMenu( client->ps.clientNum, MN_TEAM );
@@ -489,7 +488,7 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
     }
   }
 
-  else if( attack1 && ent->client->sess.spectatorState == SPECTATOR_FOLLOW )
+  else if( attack1 && ent->client->sess.spectatorState == SPECTATOR_FOLLOW && !level.mapRotationVoteTime )
   {
     G_StopFollowing( ent );
     client->pers.classSelection = PCL_NONE;

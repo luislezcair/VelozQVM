@@ -423,7 +423,7 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
     if( ( client->pers.teamSelection == PTE_ALIENS &&
         G_SearchSpawnQueue( &level.alienSpawnQueue, ent-g_entities ) ) ||
         ( client->pers.teamSelection == PTE_HUMANS &&
-        G_SearchSpawnQueue( &level.alienSpawnQueue, ent-g_entities ) ) )
+        G_SearchSpawnQueue( &level.humanSpawnQueue, ent-g_entities ) ) )
     {
         client->ps.pm_flags |= PMF_QUEUED;
     }

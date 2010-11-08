@@ -631,8 +631,6 @@ void ClientTimerActions( gentity_t *ent, int msec )
   usercmd_t *ucmd;
   int       aForward, aRight;
   int foundTurrets = 0;
-//  int staminaLarmour = STAMINA_LARMOUR_TAKE;
-//  int staminaSprint = STAMINA_SPRINT_TAKE;
   
   ucmd = &ent->client->pers.cmd;
 
@@ -643,14 +641,7 @@ void ClientTimerActions( gentity_t *ent, int msec )
   client->time100 += msec;
   client->time1000 += msec;
   client->time10000 += msec;
-/*
-  if( ( client->ps.stats[ STAT_STATE ] & SS_SPEEDBOOST ) &&
-    g_modHumanStamina.integer > 0 )
-    {
-    staminaLarmour = staminaLarmour * 100 / g_modHumanStamina.integer;
-    staminaSprint = staminaSprint * 100 / g_modHumanStamina.integer;
-    }
-*/
+
   while ( client->time100 >= 100 )
   {
     client->time100 -= 100;
@@ -727,10 +718,6 @@ void ClientTimerActions( gentity_t *ent, int msec )
 
         if( ucmd->forwardmove > 0 )
         {
-          //trigger charge sound...is quite annoying
-          //if( client->ps.stats[ STAT_MISC ] <= 0 )
-          //  G_AddEvent( ent, EV_LEV4_CHARGE_PREPARE, 0 );
-
           client->ps.stats[ STAT_MISC ] += (int)( 100 * (float)LEVEL4_CHARGE_CHARGE_RATIO );
 
           if( client->ps.stats[ STAT_MISC ] > LEVEL4_CHARGE_TIME )
@@ -2072,7 +2059,7 @@ void SpectatorClientEndFrame( gentity_t *ent )
 
       if( cl->pers.teamSelection == PTE_ALIENS )
         G_SelectAlienLockSpawnPoint( spawn_origin, spawn_angles );
-          else if( cl->pers.teamSelection == PTE_HUMANS )
+      else if( cl->pers.teamSelection == PTE_HUMANS )
         G_SelectHumanLockSpawnPoint( spawn_origin, spawn_angles );
 
           G_SetOrigin( ent, spawn_origin );

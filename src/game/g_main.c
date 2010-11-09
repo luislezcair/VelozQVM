@@ -242,18 +242,6 @@ vmCvar_t  g_healShove;
 
 vmCvar_t  g_randomMaps;
 vmCvar_t  g_randomMapList;
-/*
-vmCvar_t  g_modBuildableHealth;
-vmCvar_t  g_modBuildableSpeed;
-vmCvar_t  g_modHumanStamina;
-vmCvar_t  g_modHumanHealth;
-vmCvar_t  g_modAlienHealth;
-vmCvar_t  g_modHumanRate;
-vmCvar_t  g_modAlienRate;
-vmCvar_t  g_modWeaponAmmo;
-vmCvar_t  g_modWeaponReload;
-vmCvar_t  g_modTurretAngle;
-*/
 vmCvar_t  g_teamStatus;
 vmCvar_t  g_teamStatusTime;
 
@@ -316,18 +304,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_specAspec, "g_specAspec", "0", CVAR_ARCHIVE, 0, qtrue  },
 
   { &g_healShove, "g_healShove", "1", CVAR_ARCHIVE, 0, qtrue  },
-/*
-  { &g_modBuildableHealth, "g_modBuildableHealth", "0", CVAR_ARCHIVE, 0, qfalse  },
-  { &g_modBuildableSpeed, "g_modBuildableSpeed", "0", CVAR_ARCHIVE, 0, qfalse  },
-  { &g_modHumanStamina, "g_modHumanStamina", "0", CVAR_ARCHIVE, 0, qfalse  },
-  { &g_modHumanHealth, "g_modHumanHealth", "0", CVAR_ARCHIVE, 0, qfalse  },
-  { &g_modAlienHealth, "g_modAlienHealth", "0", CVAR_ARCHIVE, 0, qfalse  },
-  { &g_modHumanRate, "g_modHumanRate", "0", CVAR_ARCHIVE, 0, qfalse  },
-  { &g_modAlienRate, "g_modAlienRate", "0", CVAR_ARCHIVE, 0, qfalse  },
-  { &g_modWeaponAmmo, "g_modWeaponAmmo", "0", CVAR_ARCHIVE, 0, qfalse  },
-  { &g_modWeaponReload, "g_modWeaponReload", "0", CVAR_ARCHIVE, 0, qfalse  },
-  { &g_modTurretAngle, "g_modTurretAngle", "0", CVAR_ARCHIVE, 0, qfalse  },
-*/
+
   { &g_teamStatus, "g_teamStatus", "1", CVAR_ARCHIVE, 0, qfalse  },
   { &g_teamStatusTime, "g_teamStatusTime", "0", CVAR_ARCHIVE, 0, qfalse  },
   { &g_instantBuild, "g_instantBuild", "0", CVAR_ARCHIVE, 0, qfalse  },
@@ -750,23 +727,7 @@ void G_UpdateCvars( void )
   if( remapped )
     G_RemapTeamShaders( );
 }
-/*
-static void G_InitModCvars( void )
-{
-  BG_MOD_set( MOD_BG_BUILDABLE_HEALTH, g_modBuildableHealth.integer );
-  BG_MOD_set( MOD_BG_BUILDABLE_SPEED, g_modBuildableSpeed.integer );
-  BG_MOD_set( MOD_BG_HUMAN_STAMINA, g_modHumanStamina.integer );
-  BG_MOD_set( MOD_BG_HUMAN_HEALTH, g_modHumanHealth.integer );
-  BG_MOD_set( MOD_BG_ALIEN_HEALTH, g_modAlienHealth.integer );
-  BG_MOD_set( MOD_BG_HUMAN_RATE, g_modHumanRate.integer );
-  BG_MOD_set( MOD_BG_ALIEN_RATE, g_modAlienRate.integer );
-  BG_MOD_set( MOD_BG_WEAPON_AMMO, g_modWeaponAmmo.integer );
-  BG_MOD_set( MOD_BG_WEAPON_RELOAD, g_modWeaponReload.integer );
-  BG_MOD_set( MOD_BG_TURRET_ANGLE, g_modTurretAngle.integer );
 
-  BG_MOD_update( );
-}
-*/
 /*
 =================
 G_MapConfigs

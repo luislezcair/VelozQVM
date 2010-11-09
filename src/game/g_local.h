@@ -1481,18 +1481,7 @@ extern  vmCvar_t  g_healShove;
 
 extern	vmCvar_t  g_randomMaps;
 extern	vmCvar_t  g_randomMapList;
-/*
-extern  vmCvar_t  g_modBuildableHealth;  // Buildable health
-extern  vmCvar_t  g_modBuildableSpeed;   // Buildable fire rate
-extern  vmCvar_t  g_modHumanStamina;     // Human stamina
-extern  vmCvar_t  g_modHumanHealth;      // Human health
-extern  vmCvar_t  g_modAlienHealth;      // Alien health
-extern  vmCvar_t  g_modHumanRate;        // Human fire rate
-extern  vmCvar_t  g_modAlienRate;        // Alien fire rate
-extern  vmCvar_t  g_modWeaponAmmo;       // Weapon ammo per clip
-extern  vmCvar_t  g_modWeaponReload;     // Weapon reload time
-extern  vmCvar_t  g_modTurretAngle;      // Allow high turret build angles
-*/
+
 extern  vmCvar_t  g_instantBuild;        // Enable instant building outside of devmap mode
 extern  vmCvar_t  g_defaultLayout;
 extern  vmCvar_t  g_teamStatus;          // Allow the use of /teamstatus

@@ -715,16 +715,7 @@ static qboolean PM_CheckJump( void )
   //TA: take some stamina off
   if( pm->ps->stats[ STAT_PTEAM ] == PTE_HUMANS )
       pm->ps->stats[ STAT_STAMINA ] -= STAMINA_JUMP_TAKE;
-/*  {
-    int rate;
 
-    rate = BG_MOD_get( MOD_BG_HUMAN_STAMINA );
-    if( rate )
-      pm->ps->stats[ STAT_STAMINA ] -= 350 * 100 / rate;
-    else
-
-  }
-*/
   pm->ps->groundEntityNum = ENTITYNUM_NONE;
 
   //TA: jump away from wall

@@ -735,6 +735,10 @@ void SpawnCorpse( gentity_t *ent )
   trace_t     tr;
   float       vDiff;
 
+  //prevent crashing everyone with bad corpsenum bug
+  if( ent->client->pers.connected != CON_CONNECTED )
+      return;
+
   VectorCopy( ent->r.currentOrigin, origin );
 
   trap_UnlinkEntity( ent );

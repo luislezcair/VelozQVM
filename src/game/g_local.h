@@ -1426,6 +1426,8 @@ extern  vmCvar_t  g_maraObituary;
 
 extern  vmCvar_t  g_decolorLogfiles;
 
+extern  vmCvar_t  g_maxGhostsPerIP;
+
 extern  vmCvar_t  g_privateMessages;
 extern  vmCvar_t  g_buildLogMaxLength;
 extern  vmCvar_t  g_publicSayadmins;

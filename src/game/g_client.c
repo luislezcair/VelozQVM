@@ -1411,6 +1411,38 @@ char *ClientConnect( int clientNum, qboolean firstTime )
   if( G_FilterPacket( value ) )
     return "You are banned from this server.";
 
+  if( strlen( ip ) < 7 )
+  {
+    G_AdminsPrintf( "Connect from client with invalid IP: '%s' NAME: '%s^7'\n",
+                    ip, Info_ValueForKey( userinfo, "name" ) );
+    return "Invalid client data";
+  }
+
+  // limit max clients per IP
+  if( g_maxGhostsPerIP.integer > 1 )
+  {
+    gclient_t *other;
+    int count = 0;
+
+    for( i = 0 ; i < level.maxclients; i++ )
+    {
+        other = &level.clients[ i ];
+        if( other &&
+          ( other->pers.connected == CON_CONNECTED || other->pers.connected == CON_CONNECTING ) &&
+            strcmp( ip, other->pers.ip ) == 0 )
+        {
+            count++;
+        }
+    }
+
+    if( count + 1 > g_maxGhostsPerIP.integer )
+    {
+        G_AdminsPrintf( "Connect from client exceeds %d maximum connections per IP: '%s' NAME: '%s^7'\n",
+                        g_maxGhostsPerIP.integer, ip, Info_ValueForKey( userinfo, "name" ) );
+        return "Maximum simultaneous clients exceeded";
+    }
+  }
+
   // check for a password
   value = Info_ValueForKey( userinfo, "password" );
 
@@ -1833,12 +1865,9 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles
 
   if( !( client->sess.sessionTeam == TEAM_SPECTATOR ) )
   {
-    /*G_KillBox( ent );*/ //blame this if a newly spawned client gets stuck in another
     trap_LinkEntity( ent );
 
     // force the base weapon up
-    //client->ps.weapon = WP_NONE;
-
     if( client->pers.teamSelection == PTE_HUMANS )
         G_ForceWeaponChange( ent, weapon );
 

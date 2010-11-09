@@ -653,7 +653,8 @@ void ClientTimerActions( gentity_t *ent, int msec )
     if( BG_InventoryContainsUpgrade( UP_JETPACK, client->ps.stats ) && BG_UpgradeIsActive( UP_JETPACK, client->ps.stats ) )
       client->ps.stats[ STAT_STATE ] &= ~SS_SPEEDBOOST;
 
-    if( ( client->ps.stats[ STAT_STATE ] & SS_SPEEDBOOST ) &&  ucmd->upmove >= 0 )
+    if( ( client->ps.stats[ STAT_STATE ] & SS_SPEEDBOOST ) &&
+       !( client->ps.stats[ STAT_STATE ] & PMF_DUCKED ) )
     {
       //subtract stamina
       if( BG_InventoryContainsUpgrade( UP_LIGHTARMOUR, client->ps.stats ) )

@@ -207,6 +207,7 @@ struct gentity_s
   qboolean          dcced;              // controlled by a dcc or not?
   qboolean          spawned;            // whether or not this buildable has finished spawning
   int               buildTime;          // when this buildable was built
+  int               animTime;           // last animation change
   int               time1000;           // timer evaluated every second
   qboolean          deconstruct;        // deconstruct if no BP left
   int               deconstructTime;    // time at which structure marked
@@ -1542,3 +1543,4 @@ qboolean  trap_GetEntityToken( char *buffer, int bufferSize );
 
 void      trap_SnapVector( float *v );
 void      trap_SendGameStat( const char *data );
+int       trap_GeoIP_GetCountryName( const char* ip_address, char* dest );

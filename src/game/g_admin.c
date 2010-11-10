@@ -603,7 +603,7 @@ static qboolean admin_higher( gentity_t *admin, gentity_t *victim )
     victim->client->pers.guid );
 }
 
-static void admin_writeconfig_string( char *s, fileHandle_t f )
+void admin_writeconfig_string( char *s, fileHandle_t f )
 {
   char buf[ MAX_STRING_CHARS ];
 
@@ -617,7 +617,7 @@ static void admin_writeconfig_string( char *s, fileHandle_t f )
   trap_FS_Write( "\n", 1, f );
 }
 
-static void admin_writeconfig_int( int v, fileHandle_t f )
+void admin_writeconfig_int( int v, fileHandle_t f )
 {
   char buf[ 32 ];
 
@@ -627,10 +627,10 @@ static void admin_writeconfig_int( int v, fileHandle_t f )
   trap_FS_Write( "\n", 1, f );
 }
 
-static void admin_writeconfig( void )
+void admin_writeconfig( void )
 {
   fileHandle_t f;
-  int len, i, j;
+  int len, i;
   qtime_t qt;
   int t;
   char levels[ MAX_STRING_CHARS ] = {""};
@@ -2612,7 +2612,7 @@ qboolean G_admin_unban( gentity_t *ent, int skiparg )
 qboolean G_admin_putteam( gentity_t *ent, int skiparg )
 {
   int pids[ MAX_CLIENTS ];
-  char name[ MAX_NAME_LENGTH ], team[ 7 ], err[ MAX_STRING_CHARS ];
+  char name[ MAX_NAME_LENGTH ], team[ 7 ];
   gentity_t *vic;
   pTeam_t teamnum = PTE_NONE;
   char teamdesc[ 32 ] = {"spectators"};
@@ -7175,7 +7175,6 @@ qboolean G_admin_nobuild( gentity_t *ent, int skiparg )
   int minargc;
   char units[ MAX_STRING_CHARS ];
   char units2[ MAX_STRING_CHARS ];
-  gentity_t *nb;
   int units3;
   int units4;
   minargc = 3 + skiparg;
@@ -7192,23 +7191,24 @@ qboolean G_admin_nobuild( gentity_t *ent, int skiparg )
   units3 = atoi(units);
   units4 = atoi(units2);
 
-  if( level.nobuild == qfalse ){
-   
-   if( G_SayArgc() < minargc )
-   {
-     ADMP( "^3!nobuild: ^7usage: !nobuild [game units area] [gane units height]\n" );
-     return qfalse;
-   }
-   
-  level.nobuild = qtrue;
-  level.nobuildArea = units3;
-  level.nobuildHeight = units4;
-  AP( va( "print \"^3!nobuild: ^7nobuild mode has been enabled by %s^7\n\"", ( ent ) ? ent->client->pers.netname : "console" ) );
+  if( level.nobuild == qfalse )
+  {
+    if( G_SayArgc() < minargc )
+    {
+        ADMP( "^3!nobuild: ^7usage: !nobuild [game units area] [gane units height]\n" );
+        return qfalse;
+    }
+
+    level.nobuild = qtrue;
+    level.nobuildArea = units3;
+    level.nobuildHeight = units4;
+    AP( va( "print \"^3!nobuild: ^7nobuild mode has been enabled by %s^7\n\"", ( ent ) ? ent->client->pers.netname : "console" ) );
   }
-  else{
-  level.nobuild = qfalse;
-  level.nobuildArea = 0.0f;
-  AP( va( "print \"^3!nobuild: ^7nobuild mode has been disabled by %s^7\n\"", ( ent ) ? ent->client->pers.netname : "console" ) );
+  else
+  {
+    level.nobuild = qfalse;
+    level.nobuildArea = 0.0f;
+    AP( va( "print \"^3!nobuild: ^7nobuild mode has been disabled by %s^7\n\"", ( ent ) ? ent->client->pers.netname : "console" ) );
   }
   
   return qtrue;
@@ -7227,7 +7227,6 @@ qboolean G_admin_lockname( gentity_t *ent, int skiparg )
 {
   int pids[ MAX_CLIENTS ];
   char name[ MAX_NAME_LENGTH ], err[ MAX_STRING_CHARS ];
-  char command[ MAX_ADMIN_CMD_LEN ];
   gentity_t *vic;
 
   if( G_SayArgc() < 2 + skiparg )

@@ -74,56 +74,6 @@ void G_SanitiseString( char *in, char *out, int len )
 
 /*
 ==================
-G_SanitiseName
-
-Remove case and control characters from a player name
-==================
-*/
-void G_SanitiseName( char *in, char *out )
-{
-  qboolean skip = qtrue;
-  int spaces = 0;
-  int out_len = 0;
-
-  while( *in && out_len < MAX_NAME_LENGTH - 1 )
-  {
-    // strip leading white space
-    if( *in == ' ' )
-    {
-      if( skip )
-      {
-        in++;
-        continue;
-      }
-      spaces++;
-    }
-    else
-    {
-      spaces = 0;
-      skip = qfalse;
-    }
-    
-    if( *in == 27 || *in == '^' )
-    {
-      in += 2;    // skip color code
-      continue;
-    }
-
-    if( *in < 32 )
-    {
-      in++;
-      continue;
-    }
-
-    *out++ = tolower( *in++ );
-    out_len++;
-  }
-  out -= spaces; 
-  *out = 0;
-}
-
-/*
-==================
 G_ClientNumberFromString
 
 Returns a player number for either a number or name string
@@ -154,14 +104,14 @@ int G_ClientNumberFromString( gentity_t *to, char *s )
   }
 
   // check for a name match
-  G_SanitiseName( s, s2 );
+  G_SanitiseString( s, s2, sizeof( s2 ) );
 
   for( idnum = 0, cl = level.clients; idnum < level.maxclients; idnum++, cl++ )
   {
     if( cl->pers.connected != CON_CONNECTED )
       continue;
 
-    G_SanitiseName( cl->pers.netname, n2 );
+    G_SanitiseString( cl->pers.netname, n2, sizeof( n2 ) );
 
     if( !strcmp( n2, s2 ) )
       return idnum;
@@ -261,7 +211,7 @@ int G_ClientNumbersFromString( char *s, int *plist )
   }
   
   // now look for name matches
-  G_SanitiseName( s, s2 );
+  G_SanitiseString( s, s2, sizeof( s2 ) );
   if( strlen( s2 ) < 1 )
     return 0;
   for( i = 0; i < level.maxclients; i++ )
@@ -272,7 +222,7 @@ int G_ClientNumbersFromString( char *s, int *plist )
     {
       continue;
     }
-    G_SanitiseName( p->pers.netname, n2 );
+    G_SanitiseString( p->pers.netname, n2, sizeof( n2 ) );
     if( strstr( n2, s2 ) )
     {
       *plist++ = i;
@@ -668,7 +618,12 @@ void G_LeaveTeam( gentity_t *self )
   else if( team == PTE_HUMANS )
     G_RemoveFromSpawnQueue( &level.humanSpawnQueue, self->client->ps.clientNum );
   else
+  {
+    if( self->client->sess.spectatorState == SPECTATOR_FOLLOW )
+      G_StopFollowing( self );
+
     return;
+  }
 
   // stop any following clients
   G_StopFromFollowing( self );
@@ -4415,6 +4370,7 @@ void G_StopFollowing( gentity_t *ent )
   if( ent->client->pers.teamSelection == PTE_NONE )
   {
     ent->client->sess.spectatorState = SPECTATOR_FREE;
+    ent->client->ps.pm_type = PM_SPECTATOR;
   }
   else
   {

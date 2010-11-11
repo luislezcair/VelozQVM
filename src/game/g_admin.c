@@ -484,7 +484,7 @@ qboolean G_admin_name_check( gentity_t *ent, char *name, char *err, int len )
   char name2[ MAX_NAME_LENGTH ] = {""};
   int alphaCount = 0;
 
-  G_SanitiseName( name, name2 );
+  G_SanitiseString( name, name2, sizeof( name2 ) );
 
   if( !Q_stricmp( name2, "UnnamedPlayer" ) ) 
     return qtrue;
@@ -509,7 +509,7 @@ qboolean G_admin_name_check( gentity_t *ent, char *name, char *err, int len )
     if( i == ( ent - g_entities ) )
       continue;
 
-    G_SanitiseName( client->pers.netname, testName );
+    G_SanitiseString( client->pers.netname, testName, sizeof( testName ) );
     if( !Q_stricmp( name2, testName ) )
     {
       Q_strncpyz( err, va( "The name '%s^7' is already in use", name ),
@@ -551,7 +551,7 @@ qboolean G_admin_name_check( gentity_t *ent, char *name, char *err, int len )
   {
     if( g_admin_admins[ i ]->level < 1 )
       continue;
-    G_SanitiseName( g_admin_admins[ i ]->name, testName );
+    G_SanitiseString( g_admin_admins[ i ]->name, testName, sizeof( testName ) );
     if( !Q_stricmp( name2, testName ) &&
       Q_stricmp( ent->client->pers.guid, g_admin_admins[ i ]->guid ) )
     {
@@ -1006,7 +1006,7 @@ static int admin_listadmins( gentity_t *ent, int start, char *search, int minlev
     
     l = vic->client->pers.adminLevel;
 
-    G_SanitiseName( vic->client->pers.netname, name );
+    G_SanitiseString( vic->client->pers.netname, name, sizeof( name ) );
     if( !strstr( name, search ) )
       continue;
 
@@ -1045,7 +1045,7 @@ static int admin_listadmins( gentity_t *ent, int start, char *search, int minlev
    {
      if( search[ 0 ] )
      {
-       G_SanitiseName( g_admin_admins[ i ]->name, name );
+       G_SanitiseString( g_admin_admins[ i ]->name, name, sizeof( name ) );
        if( !strstr( name, search ) )
          continue;
       
@@ -1057,7 +1057,7 @@ static int admin_listadmins( gentity_t *ent, int start, char *search, int minlev
          vic = &g_entities[ j ];
          if( !vic->client || vic->client->pers.connected != CON_CONNECTED )
            continue;
-         G_SanitiseName( vic->client->pers.netname, name2 );
+         G_SanitiseString( vic->client->pers.netname, name2, sizeof( name2 ) );
          if( !Q_stricmp( vic->client->pers.guid, g_admin_admins[ i ]->guid )
            && strstr( name2, search ) ) 
          {
@@ -1375,7 +1375,7 @@ void G_admin_namelog_update( gclient_t *client, qboolean disconnect )
   if( client->sess.invisible == qfalse )
     G_admin_seen_update( client->pers.guid );
 
-  G_SanitiseName( client->pers.netname, n1 );
+  G_SanitiseString( client->pers.netname, n1, sizeof( n1 ) );
   for( i = 0; i < MAX_ADMIN_NAMELOGS && g_admin_namelog[ i ]; i++ )
   {
     if( disconnect && g_admin_namelog[ i ]->slot != clientNum )
@@ -1393,7 +1393,7 @@ void G_admin_namelog_update( gclient_t *client, qboolean disconnect )
       for( j = 0; j < MAX_ADMIN_NAMELOG_NAMES
         && g_admin_namelog[ i ]->name[ j ][ 0 ]; j++ )
       {
-        G_SanitiseName( g_admin_namelog[ i ]->name[ j ], n2 );
+        G_SanitiseString( g_admin_namelog[ i ]->name[ j ], n2, sizeof( n2 ) );
         if( !Q_stricmp( n1, n2 ) ) 
           break;
       }
@@ -1932,7 +1932,7 @@ qboolean G_admin_setlevel( gentity_t *ent, int skiparg )
   G_SayArgv( 1 + skiparg, testname, sizeof( testname ) );
   G_SayArgv( 2 + skiparg, lstr, sizeof( lstr ) );
   l = atoi( lstr );
-  G_SanitiseName( testname, name );
+  G_SanitiseString( testname, name, sizeof( name ) );
   for( i = 0; i < sizeof( name ) && name[ i ] ; i++ )
   {
     if( name[ i ] < '0' || name[ i ] > '9' )
@@ -1996,7 +1996,7 @@ qboolean G_admin_setlevel( gentity_t *ent, int skiparg )
       vic = &g_entities[ i ];
       if( !vic->client || vic->client->pers.connected != CON_CONNECTED )
         continue;
-      G_SanitiseName( vic->client->pers.netname, testname );
+      G_SanitiseString( vic->client->pers.netname, testname, sizeof( testname ) );
       if( strstr( testname, name ) )
       {
         matches++;
@@ -2006,7 +2006,7 @@ qboolean G_admin_setlevel( gentity_t *ent, int skiparg )
     }
     for( i = 0; i < MAX_ADMIN_ADMINS && g_admin_admins[ i ] && matches < 2; i++)
     {
-      G_SanitiseName( g_admin_admins[ i ]->name, testname );
+      G_SanitiseString( g_admin_admins[ i ]->name, testname, sizeof( testname ) );
       if( strstr( testname, name ) )
       {
         qboolean dup = qfalse;
@@ -2017,7 +2017,7 @@ qboolean G_admin_setlevel( gentity_t *ent, int skiparg )
           vic = &g_entities[ j ];
           if( !vic->client || vic->client->pers.connected != CON_CONNECTED )
             continue;
-          G_SanitiseName(  vic->client->pers.netname, testname2 );
+          G_SanitiseString(  vic->client->pers.netname, testname2, sizeof( testname2 ) );
           if( !Q_stricmp( vic->client->pers.guid, g_admin_admins[ i ]->guid )
             && strstr( testname2, name ) ) 
           {
@@ -2331,7 +2331,7 @@ qboolean G_admin_ban( gentity_t *ent, int skiparg )
     return qfalse;
   }
   G_SayArgv( 1 + skiparg, search, sizeof( search ) );
-  G_SanitiseName( search, s2 );
+  G_SanitiseString( search, s2, sizeof( s2 ) );
   G_SayArgv( 2 + skiparg, secs, sizeof( secs ) );
 
   seconds = G_admin_parse_time( secs );
@@ -2405,7 +2405,7 @@ qboolean G_admin_ban( gentity_t *ent, int skiparg )
     for( j = 0; j < MAX_ADMIN_NAMELOG_NAMES
       && g_admin_namelog[ i ]->name[ j ][ 0 ]; j++ )
     {
-      G_SanitiseName(g_admin_namelog[ i ]->name[ j ], n2);
+      G_SanitiseString(g_admin_namelog[ i ]->name[ j ], n2, sizeof( n2 ) );
       if( strstr( n2, s2 ) )
       {
         if( logmatch != i )
@@ -2432,7 +2432,7 @@ qboolean G_admin_ban( gentity_t *ent, int skiparg )
       for( j = 0; j < MAX_ADMIN_NAMELOG_NAMES
         && g_admin_namelog[ i ]->name[ j ][ 0 ]; j++ )
       {
-        G_SanitiseName(g_admin_namelog[ i ]->name[ j ], n2);
+        G_SanitiseString( g_admin_namelog[ i ]->name[ j ], n2, sizeof( n2 ) );
         if( strstr( n2, s2 ) )
         {
           if( g_admin_namelog[ i ]->slot > -1 )
@@ -3199,7 +3199,7 @@ qboolean G_admin_listadmins( gentity_t *ent, int skiparg )
         start = found + start;
     }
     else
-      G_SanitiseName( s, search );
+      G_SanitiseString( s, search, sizeof( search ) );
   }
 
   if( start >= found || start < 0 )
@@ -3395,7 +3395,7 @@ qboolean G_admin_listplayers( gentity_t *ent, int skiparg )
     }
 
     l = 0;
-    G_SanitiseName( p->pers.netname, n2 );
+    G_SanitiseString( p->pers.netname, n2, sizeof( n2 ) );
     n[ 0 ] = '\0';
     for( j = 0; j < MAX_ADMIN_ADMINS && g_admin_admins[ j ]; j++ )
     {
@@ -3408,7 +3408,7 @@ qboolean G_admin_listplayers( gentity_t *ent, int skiparg )
           break;
         }
         l = g_admin_admins[ j ]->level;
-        G_SanitiseName( g_admin_admins[ j ]->name, n3 );
+        G_SanitiseString( g_admin_admins[ j ]->name, n3, sizeof( n3 ) );
         if( Q_stricmp( n2, n3 ) )
         {
           Q_strncpyz( n, g_admin_admins[ j ]->name, sizeof( n ) );
@@ -3524,7 +3524,7 @@ qboolean G_admin_showbans( gentity_t *ent, int skiparg )
 
     if (!numeric)
       {
-      G_SanitiseName( skip, name_match );
+      G_SanitiseString( skip, name_match, sizeof( name_match ) );
       }
     else if( strchr( skip, '.' ) != NULL )
       {
@@ -3552,7 +3552,7 @@ qboolean G_admin_showbans( gentity_t *ent, int skiparg )
 
     if (!numeric)
       {
-      G_SanitiseName( g_admin_bans[ i ]->name, n1 );
+      G_SanitiseString( g_admin_bans[ i ]->name, n1, sizeof( n1 ) );
       if (strstr( n1, name_match) )
         match = qtrue;
       }
@@ -3589,7 +3589,7 @@ qboolean G_admin_showbans( gentity_t *ent, int skiparg )
 
     if (!numeric)
     {
-      G_SanitiseName( g_admin_bans[ i ]->name, n1 );
+      G_SanitiseString( g_admin_bans[ i ]->name, n1, sizeof( n1 ) );
       if ( strstr ( n1, name_match ) == NULL )
         continue;
     }
@@ -4292,7 +4292,7 @@ qboolean G_admin_namelog( gentity_t *ent, int skiparg )
   if( G_SayArgc() > 1 + skiparg )
   {
     G_SayArgv( 1 + skiparg, search, sizeof( search ) );
-    G_SanitiseName( search, s2 );
+    G_SanitiseString( search, s2, sizeof( s2 ) );
   }
   ADMBP_begin();
   for( i = 0; i < MAX_ADMIN_NAMELOGS && g_admin_namelog[ i ]; i++ )
@@ -4303,7 +4303,7 @@ qboolean G_admin_namelog( gentity_t *ent, int skiparg )
       for( j = 0; j < MAX_ADMIN_NAMELOG_NAMES && 
         g_admin_namelog[ i ]->name[ j ][ 0 ]; j++ )
       {
-        G_SanitiseName( g_admin_namelog[ i ]->name[ j ], n2 );
+        G_SanitiseString( g_admin_namelog[ i ]->name[ j ], n2, sizeof( n2 ) );
         if( strstr( n2, s2 ) )
         {
           found = qtrue;
@@ -5641,7 +5641,7 @@ qboolean G_admin_L0(gentity_t *ent, int skiparg ){
     return qfalse;
   }
   G_SayArgv( 1 + skiparg, testname, sizeof( testname ) );
-  G_SanitiseName( testname, name );
+  G_SanitiseString( testname, name, sizeof( name ) );
   for( i = 0; i < sizeof( name ) && name[ i ] ; i++ )
   {
     if( name[ i ] < '0' || name[ i ] > '9' )
@@ -5722,7 +5722,7 @@ qboolean G_admin_seen(gentity_t *ent, int skiparg )
     return qfalse;
   }
   G_SayArgv( 1 + skiparg, name, sizeof( name ) );
-  G_SanitiseName( name, search );
+  G_SanitiseString( name, search, sizeof( search ) );
   for( i = 0; i < sizeof( search ) && search[ i ] ; i++ )
   {
     if( search[ i ] < '0' || search[ i ] > '9' )
@@ -5748,7 +5748,7 @@ qboolean G_admin_seen(gentity_t *ent, int skiparg )
     if( !vic->client || vic->client->pers.connected != CON_CONNECTED )
       continue;
 
-    G_SanitiseName( vic->client->pers.netname, name );
+    G_SanitiseString( vic->client->pers.netname, name, sizeof( name ) );
 
     if( i == id || (search[ 0 ] && strstr( name, search ) ) )
     {
@@ -5758,7 +5758,7 @@ qboolean G_admin_seen(gentity_t *ent, int skiparg )
   }
   for( i = 0; i < MAX_ADMIN_ADMINS && g_admin_admins[ i ] && count < 10; i++ )
   {
-    G_SanitiseName( g_admin_admins[ i ]->name, name );
+    G_SanitiseString( g_admin_admins[ i ]->name, name, sizeof( name ) );
     if( i + MAX_CLIENTS == id || (search[ 0 ] && strstr( name, search ) ) )
     {
       ison = qfalse;
@@ -5767,7 +5767,7 @@ qboolean G_admin_seen(gentity_t *ent, int skiparg )
         vic = &g_entities[ j ];
         if( !vic->client || vic->client->pers.connected != CON_CONNECTED )
           continue;
-        G_SanitiseName( vic->client->pers.netname, name );
+        G_SanitiseString( vic->client->pers.netname, name, sizeof( name ) );
         if( !Q_stricmp( vic->client->pers.guid, g_admin_admins[ i ]->guid )
           && strstr( name, search ) )
         {
@@ -6012,7 +6012,7 @@ qboolean G_admin_adminlog( gentity_t *ent, int skiparg )
       }
       if( search_name )
       {
-        G_SanitiseName( g_admin_adminlog[ index ]->name, n1 );
+        G_SanitiseString( g_admin_adminlog[ index ]->name, n1, sizeof( n1 ) );
         if( strstr( n1, search_name ) )
           match = qtrue;
       }
@@ -6264,7 +6264,7 @@ qboolean G_admin_tklog( gentity_t *ent, int skiparg )
     {
       match = qfalse;
 
-      G_SanitiseName( g_admin_tklog[ index ]->name, n1 );
+      G_SanitiseString( g_admin_tklog[ index ]->name, n1, sizeof( n1 ) );
       if( strstr( n1, search_name ) )
         match = qtrue;
 

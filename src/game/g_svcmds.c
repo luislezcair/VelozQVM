@@ -766,7 +766,7 @@ qboolean  ConsoleCommand( void )
       Q_strncpyz( buffer, ConcatArgs( 1 ), sizeof( buffer ) );
       G_ParseEscapedString( buffer );
       trap_SendServerCommand( -1, va( "cp \"%s\"", buffer ) );
-//      trap_SendServerCommand( -1, va( "print \"CP: %s\n\"", buffer ) );
+      trap_SendServerCommand( -1, va( "print \"CP: %s\n\"", buffer ) );
       G_Printf( "cp: %s\n", ConcatArgs( 1 ) );
       return qtrue;
     }

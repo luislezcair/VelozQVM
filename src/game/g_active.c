@@ -2063,9 +2063,9 @@ void SpectatorClientEndFrame( gentity_t *ent )
       else if( cl->pers.teamSelection == PTE_HUMANS )
         G_SelectHumanLockSpawnPoint( spawn_origin, spawn_angles );
 
-          G_SetOrigin( ent, spawn_origin );
-          VectorCopy( spawn_origin, ent->client->ps.origin );
-          G_SetClientViewAngle( ent, spawn_angles );
+      G_SetOrigin( ent, spawn_origin );
+      VectorCopy( spawn_origin, ent->client->ps.origin );
+      G_SetClientViewAngle( ent, spawn_angles );
     }
       }
     }

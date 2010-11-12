@@ -1227,6 +1227,16 @@ qboolean AHovel_Blocked( gentity_t *hovel, gentity_t *player, qboolean provideEx
                  VectorMaxComponent( hovelMaxs ) * M_ROOT3 + 1.0f;
 
   VectorMA( hovel->s.origin, displacement, forward, origin );
+
+  VectorCopy( hovel->s.origin, start );
+  VectorCopy( origin, end );
+
+  // see if there's something between the hovel and its exit
+  // (e.g. built right up against a wall)
+  trap_Trace( &tr, start, NULL, NULL, end, player->s.number, MASK_PLAYERSOLID );
+  if( tr.fraction < 1.0f )
+      return qtrue;
+
   vectoangles( forward, angles );
 
   VectorMA( origin, HOVEL_TRACE_DEPTH, normal, start );
@@ -2276,9 +2286,6 @@ void HMGTurret_FindEnemy( gentity_t *self )
 }
 
 #define MGTURRET_DROOPSCALE     0.5f
-#define TURRET_REST_TIME        5000
-#define TURRET_REST_SPEED       3.0f
-#define TURRET_REST_TOLERANCE   4.0f
 
 /*
 ================
@@ -2970,7 +2977,12 @@ static qboolean G_SufficientBPAvailable( buildableTeam_t team,
 
     // Don't allow destruction of hovel with granger inside
     if( ent->s.modelindex == BA_A_HOVEL && ent->active )
-      continue;
+    {
+      if( buildable == BA_A_HOVEL )
+        return IBE_HOVEL;
+      else
+        continue;
+    }
 
     if( ent->biteam != team )
       continue;
@@ -3173,7 +3185,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
       //this assumes the adv builder is the biggest thing that'll use the hovel
       BG_FindBBoxForClass( PCL_ALIEN_BUILDER0_UPG, builderMins, builderMaxs, NULL, NULL, NULL );
 
-      if( APropHovel_Blocked( angles, origin, normal, ent ) )
+      if( APropHovel_Blocked( origin, angles, normal, ent ) )
         reason = IBE_HOVELEXIT;
     }
 

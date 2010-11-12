@@ -5471,7 +5471,34 @@ qboolean G_admin_revert( gentity_t *ent, int skiparg )
                   "another buildable, use ^3!revert %s ^7to override\n", action, argbuf ) );
               return qfalse;
             }
-		}
+        }
+
+        // Prevent teleport glitch when reverting an occupied hovel
+        if( targ->s.modelindex == BA_A_HOVEL && targ->active )
+        {
+            gentity_t *builder = targ->builder;
+            vec3_t    newOrigin;
+            vec3_t    newAngles;
+
+            VectorCopy( targ->s.angles, newAngles );
+            newAngles[ ROLL ] = 0;
+
+            VectorCopy( targ->s.origin, newOrigin );
+            VectorMA( newOrigin, 1.0f, targ->s.origin2, newOrigin );
+
+            //prevent lerping
+            builder->client->ps.eFlags ^= EF_TELEPORT_BIT;
+            builder->client->ps.eFlags &= ~EF_NODRAW;
+            G_UnlaggedClear( builder );
+
+            G_SetOrigin( builder, newOrigin );
+            VectorCopy( newOrigin, builder->client->ps.origin );
+            G_SetClientViewAngle( builder, newAngles );
+
+            //client leaves hovel
+            builder->client->ps.stats[ STAT_STATE ] &= ~SS_HOVELING;
+        }
+
         // if we haven't returned yet then we're good to go, free it
         G_FreeEntity( targ );
         // put the marked buildables back and mark them again

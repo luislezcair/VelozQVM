@@ -582,7 +582,7 @@ static qboolean admin_higher_guid( char *admin_guid, char *victim_guid )
     {
       if( alevel < g_admin_admins[ i ]->level )
         return qfalse;
-      if( strstr( g_admin_admins[ i ]->flags, va( "%c", ADMF_IMMUTABLE ) ) )
+      if( strstr( g_admin_admins[ i ]->flags, va( "%s", ADMF_IMMUTABLE ) ) )
         return qfalse;
     }
   }
@@ -627,7 +627,7 @@ void admin_writeconfig_int( int v, fileHandle_t f )
   trap_FS_Write( "\n", 1, f );
 }
 
-void admin_writeconfig( void )
+void G_admin_writeconfig( void )
 {
   fileHandle_t f;
   int len, i;
@@ -645,7 +645,7 @@ void admin_writeconfig( void )
   len = trap_FS_FOpenFile( g_admin.string, &f, FS_WRITE );
   if( len < 0 )
   {
-    G_Printf( "admin_writeconfig: could not open g_admin file \"%s\"\n",
+    G_Printf( "G_admin_writeconfig: could not open g_admin file \"%s\"\n",
               g_admin.string );
     return;
   }
@@ -1022,7 +1022,7 @@ static int admin_listadmins( gentity_t *ent, int start, char *search, int minlev
       {
         G_DecolorString( g_admin_levels[ j ]->name, lname );
         Com_sprintf( lname_fmt, sizeof( lname_fmt ), "%%%is",
-          ( admin_level_maxname + strlen( g_admin_levels[ j ]->name )
+          (int)( admin_level_maxname + strlen( g_admin_levels[ j ]->name )
             - strlen( lname ) ) );
         Com_sprintf( lname, sizeof( lname ), lname_fmt,
            g_admin_levels[ j ]->name );
@@ -1080,7 +1080,7 @@ static int admin_listadmins( gentity_t *ent, int start, char *search, int minlev
        {
          G_DecolorString( g_admin_levels[ j ]->name, lname );
          Com_sprintf( lname_fmt, sizeof( lname_fmt ), "%%%is",
-           ( admin_level_maxname + strlen( g_admin_levels[ j ]->name )
+           (int)( admin_level_maxname + strlen( g_admin_levels[ j ]->name )
              - strlen( lname ) ) );
          Com_sprintf( lname, sizeof( lname ), lname_fmt,
             g_admin_levels[ j ]->name );
@@ -2095,7 +2095,7 @@ qboolean G_admin_setlevel( gentity_t *ent, int skiparg )
     ADMP( "^3!setlevel: ^7WARNING g_admin not set, not saving admin record "
       "to a file\n" );
   else
-    admin_writeconfig();
+    G_admin_writeconfig( );
   return qtrue;
 }
 
@@ -2249,7 +2249,7 @@ qboolean G_admin_kick( gentity_t *ent, int skiparg )
       vic->client->pers.ip, g_adminTempBan.integer,
       ( *reason ) ? reason : "automatic temp ban created by kick" );
     if( g_admin.string[ 0 ] )
-      admin_writeconfig();
+      G_admin_writeconfig( );
   }
   
   trap_SendServerCommand( pids[ 0 ],
@@ -2473,7 +2473,7 @@ qboolean G_admin_ban( gentity_t *ent, int skiparg )
   if( !g_admin.string[ 0 ] )
     ADMP( "^3!ban: ^7WARNING g_admin not set, not saving ban to a file\n" );
   else
-    admin_writeconfig();
+    G_admin_writeconfig( );
 
   if(g_admin_namelog[ logmatch ]->slot == -1 ) 
   {
@@ -2575,7 +2575,7 @@ qboolean G_admin_adjustban( gentity_t *ent, int skiparg )
   if( !g_admin.string[ 0 ] )
     ADMP( "^3!adjustban: ^7WARNING g_admin not set, not saving ban to a file\n" );
   else
-    admin_writeconfig();
+    G_admin_writeconfig( );
   return qtrue;
 }
 
@@ -2605,7 +2605,7 @@ qboolean G_admin_unban( gentity_t *ent, int skiparg )
           g_admin_bans[ bnum - 1 ]->name,
           ( ent ) ? ent->client->pers.netname : "console" ) );
   if( g_admin.string[ 0 ] )
-    admin_writeconfig();
+    G_admin_writeconfig( );
   return qtrue;
 }
 
@@ -3427,7 +3427,7 @@ qboolean G_admin_listplayers( gentity_t *ent, int skiparg )
         {
           G_DecolorString( lname, lname2 );
           Com_sprintf( lname_fmt, sizeof( lname_fmt ), "%%%is",
-            ( admin_level_maxname + strlen( lname ) - strlen( lname2 ) ) );
+            (int)( admin_level_maxname + strlen( lname ) - strlen( lname2 ) ) );
           Com_sprintf( lname2, sizeof( lname2 ), lname_fmt, lname );
         }
         break;
@@ -3627,12 +3627,12 @@ qboolean G_admin_showbans( gentity_t *ent, int skiparg )
 
     G_DecolorString( g_admin_bans[ i ]->name, n1 );
     Com_sprintf( name_fmt, sizeof( name_fmt ), "%%%is",
-      ( max_name + strlen( g_admin_bans[ i ]->name ) - strlen( n1 ) ) );
+      (int)( max_name + strlen( g_admin_bans[ i ]->name ) - strlen( n1 ) ) );
     Com_sprintf( n1, sizeof( n1 ), name_fmt, g_admin_bans[ i ]->name ); 
 
     G_DecolorString( g_admin_bans[ i ]->banner, n2 );
     Com_sprintf( banner_fmt, sizeof( banner_fmt ), "%%%is",
-      ( max_banner + strlen( g_admin_bans[ i ]->banner ) - strlen( n2 ) ) );
+      (int)( max_banner + strlen( g_admin_bans[ i ]->banner ) - strlen( n2 ) ) );
     Com_sprintf( n2, sizeof( n2 ), banner_fmt, g_admin_bans[ i ]->banner ); 
 
     ADMBP( va( "%4i %s^7 %-15s %-8s %s^7 %-10s\n%s     \\__ %s\n",
@@ -4114,7 +4114,7 @@ qboolean G_admin_register(gentity_t *ent, int skiparg ){
   }
 
 
-  trap_SendConsoleCommand( EXEC_APPEND,va( "!setlevel %d %d;",ent - g_entities, level) );
+  trap_SendConsoleCommand( EXEC_APPEND, va( "!setlevel %ld %d;", ent - g_entities, level) );
   ClientUserinfoChanged( ent - g_entities );
   
   AP( va( "print \"^3!register: ^7%s^7 is now a protected nickname.\n\"", ent->client->pers.netname) );
@@ -5465,7 +5465,7 @@ qboolean G_admin_revert( gentity_t *ent, int skiparg )
               Com_sprintf( argbuf, sizeof argbuf, "%s%s%s%s%s%s%s!",
                   ( repeat > 1 ) ? "x" : "", ( repeat > 1 ) ? va( "%d ", repeat ) : "",
                   ( ID ) ? "#" : "", ( ID ) ? va( "%d ", ptr->ID ) : "",
-                  ( builder ) ? "-" : "", ( builder ) ? va( "%d ", builder - g_entities ) : "", 
+                  ( builder ) ? "-" : "", ( builder ) ? va( "%ld ", builder - g_entities ) : "",
                   ( team == PTE_ALIENS ) ? "a " : ( team == PTE_HUMANS ) ? "h " : "" );
               ADMP( va( "^3!revert: ^7revert aborted: reverting this %s would conflict with "
                   "another buildable, use ^3!revert %s ^7to override\n", action, argbuf ) );
@@ -5493,7 +5493,7 @@ qboolean G_admin_revert( gentity_t *ent, int skiparg )
           Com_sprintf( argbuf, sizeof argbuf, "%s%s%s%s%s%s%s!",
               ( repeat > 1 ) ? "x" : "", ( repeat > 1 ) ? va( "%d ", repeat ) : "",
               ( ID ) ? "#" : "", ( ID ) ? va( "%d ", ptr->ID ) : "",
-              ( builder ) ? "-" : "", ( builder ) ? va( "%d ", builder - g_entities ) : "", 
+              ( builder ) ? "-" : "", ( builder ) ? va( "%ld ", builder - g_entities ) : "",
               ( team == PTE_ALIENS ) ? "a " : ( team == PTE_HUMANS ) ? "h " : "" );
           ADMP( va( "^3!revert: ^7revert aborted: reverting this %s would "
               "conflict with another buildable, use ^3!revert %s ^7to override\n",
@@ -6068,7 +6068,7 @@ qboolean G_admin_adminlog( gentity_t *ent, int skiparg )
     t = results[ i ]->time / 1000;
     G_DecolorString( results[ i ]->name, n1 );
     Com_sprintf( fmt_name, sizeof( fmt_name ), "%%%ds", 
-      ( name_length + strlen( results[ i ]->name ) - strlen( n1 ) ) );
+      (int)( name_length + strlen( results[ i ]->name ) - strlen( n1 ) ) );
     Com_sprintf( n1, sizeof( n1 ), fmt_name, results[ i ]->name );
     Com_sprintf( levelbuf, sizeof( levelbuf ), "%2d", results[ i ]->level );
     ADMBP( va( "%s%3d %3d:%02d %2s ^7%s^7 %s!%s ^7%s^7\n",
@@ -6319,7 +6319,7 @@ qboolean G_admin_tklog( gentity_t *ent, int skiparg )
 
     G_DecolorString( results[ i ]->name, n1 );
     Com_sprintf( fmt_name, sizeof( fmt_name ), "%%%ds", 
-      ( name_length + strlen( results[ i ]->name ) - strlen( n1 ) ) );
+      (int)( name_length + strlen( results[ i ]->name ) - strlen( n1 ) ) );
     Com_sprintf( n1, sizeof( n1 ), fmt_name, results[ i ]->name );
 
     if( results[ i ]->team == PTE_HUMANS )
@@ -6986,7 +6986,7 @@ qboolean G_admin_flag( gentity_t *ent, int skiparg )
     ADMP( va( "^3!%s: ^7WARNING g_admin not set, not saving admin record "
       "to a file\n", cmd ) );
   else
-    admin_writeconfig();
+    G_admin_writeconfig( );
 
   return qtrue;
 }
@@ -7055,7 +7055,7 @@ qboolean G_admin_suspendban( gentity_t *ent, int skiparg )
   if( !g_admin.string[ 0 ] )
     ADMP( "^3!adjustban: ^7WARNING g_admin not set, not saving ban to a file\n" );
   else
-    admin_writeconfig();
+    G_admin_writeconfig( );
   return qtrue;
 }
 

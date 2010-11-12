@@ -1279,7 +1279,7 @@ void                G_DeletePTRConnection( connectionRecord_t *connection );
 extern  level_locals_t  level;
 extern  gentity_t       g_entities[ MAX_GENTITIES ];
 
-#define FOFS(x) ((int)&(((gentity_t *)0)->x))
+#define FOFS(x) ((long int)&(((gentity_t *)0)->x))
 
 //spree values
 #define SPREE_FEED_VALUE 120

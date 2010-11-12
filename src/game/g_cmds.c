@@ -1410,7 +1410,6 @@ void Cmd_CallVote_f( gentity_t *ent )
   int   clientNum = -1;
   char  name[ MAX_NETNAME ];
   char *arg2plus;
-  char nullstring[] = "";
   char  message[ MAX_STRING_CHARS ];
   	
   arg2plus = G_SayConcatArgs( 2 );
@@ -1737,7 +1736,7 @@ void Cmd_CallVote_f( gentity_t *ent )
        trap_SendServerCommand( ent-g_entities, "print \"Poll votes have been disabled\n\"" );
        return;
      }
-    Com_sprintf( level.voteString, sizeof( level.voteString ), nullstring);
+    Com_sprintf( level.voteString, sizeof( level.voteString ), " ");
     Com_sprintf( level.voteDisplayString,
         sizeof( level.voteDisplayString ), "[Poll] \'%s\'", arg2plus );
    }
@@ -1965,7 +1964,6 @@ void Cmd_CallTeamVote_f( gentity_t *ent )
   int   clientNum = -1;
   char  name[ MAX_NETNAME ];
   char  message[ MAX_STRING_CHARS ];
-  char nullstring[] = "";
 	
   char *arg2plus;
 	
@@ -2225,7 +2223,7 @@ void Cmd_CallTeamVote_f( gentity_t *ent )
   }
    else if( !Q_stricmp( arg1, "poll" ) )
    {
-     Com_sprintf( level.teamVoteString[ cs_offset ], sizeof( level.teamVoteString[ cs_offset ] ), nullstring );
+     Com_sprintf( level.teamVoteString[ cs_offset ], sizeof( level.teamVoteString[ cs_offset ] ), " " );
      Com_sprintf( level.teamVoteDisplayString[ cs_offset ],
          sizeof( level.voteDisplayString ), "[Poll] \'%s\'", arg2plus );
    }
@@ -2712,7 +2710,6 @@ void Cmd_Devolve_f( gentity_t *ent )
   int       numClasses = 0;
   pClass_t  currentClass = ent->client->ps.stats[ STAT_PCLASS ];
   pClass_t  newClass;
-  int       numLevels;
   int       entityList[ MAX_GENTITIES ];
   vec3_t    range = { AS_OVER_RT3, AS_OVER_RT3, AS_OVER_RT3 };
   vec3_t    mins, maxs;
@@ -4098,7 +4095,7 @@ char *G_statsString( statsCounters_t *sc, pTeam_t *pt )
     int i;
     int NextViewTime;
     int NumResults;
-    int Teamcolor;
+    int Teamcolor = 0;
     gentity_t *tmpent;
  
     //check if ent exists
@@ -5535,7 +5532,7 @@ void G_PrivateMessage( gentity_t *ent )
       Q_strcat( str, sizeof( str ), "^7, " );
     Q_strcat( str, sizeof( str ), tmpent->client->pers.netname );
     trap_SendServerCommand( pids[ i ], va(
-      "chat \"%s^%c -> ^7%s^7: (%d recipients): ^%c%s^7\" %i",
+      "chat \"%s^%c -> ^7%s^7: (%d recipients): ^%c%s^7\" %ld",
       ( ent ) ? ent->client->pers.netname : "console",
       color,
       name,

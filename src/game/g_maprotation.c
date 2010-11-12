@@ -593,12 +593,10 @@ static void G_IssueMapChange( int rotation )
 
   trap_Cvar_VariableStringBuffer( "mapname", prevMapName, sizeof( prevMapName ) );
 
-	if( !Q_stricmp( prevMapName, mapName ) ) {
-		trap_SendConsoleCommand( i, "cp \"\"\n" ); //Borra el MapVoteMenu
-		trap_SendConsoleCommand( EXEC_APPEND, "map_restart\n" );
-	}
-	else
-	  trap_SendConsoleCommand( EXEC_APPEND, va( "map %s\n", mapName ) );
+  if( !Q_stricmp( prevMapName, mapName ) )
+    trap_SendConsoleCommand( EXEC_APPEND, "map_restart\n" );
+  else
+    trap_SendConsoleCommand( EXEC_APPEND, va( "map %s\n", mapName ) );
 
   // load up map defaults if g_mapConfigs is set
   G_MapConfigs( mapName );

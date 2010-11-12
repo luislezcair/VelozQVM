@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "g_public.h"
 
 #define QVM_NAME       "VelozQVM"
-#define QVM_VERSIONNUM "1.0"
+#define QVM_VERSIONNUM "1.1"
 
 typedef struct gentity_s gentity_t;
 typedef struct gclient_s gclient_t;

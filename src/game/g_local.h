@@ -246,7 +246,6 @@ struct gentity_s
   int               lastDamageTime;
   
   int               bdnumb;		// buildlog entry ID
-  gentity_t         *oldent;
   int               livetime;
   
   qboolean	    nobuilder;

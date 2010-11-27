@@ -226,6 +226,7 @@ void CheckTeamStatus( void )
     for( i = 0; i < g_maxclients.integer; i++ )
     {
       ent = g_entities + i;
+
       if( ent->client->pers.connected != CON_CONNECTED )
         continue;
 
@@ -245,6 +246,7 @@ void CheckTeamStatus( void )
     for( i = 0; i < g_maxclients.integer; i++ )
     {
       ent = g_entities + i;
+
       if( ent->client->pers.connected != CON_CONNECTED )
         continue;
 

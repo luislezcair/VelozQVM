@@ -2667,6 +2667,12 @@ qboolean G_admin_putteam( gentity_t *ent, int skiparg )
     if( vic->client->pers.teamSelection == teamnum )
         continue;
 
+    if( level.demoState == DS_PLAYBACK )
+    {
+      ADMP( "^3!putteam: ^7cannot join a team while a demo is playing\n" );
+      return qfalse;
+    }
+
     if( vic->client->sess.invisible == qtrue ) {
         ADMP( "^3!putteam: ^7invisible players cannot join a team\n" );
         return qfalse;

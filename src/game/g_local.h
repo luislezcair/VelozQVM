@@ -398,6 +398,7 @@ typedef struct
   char                guid[ 33 ];
   char                ip[ 16 ];
   qboolean            muted;
+  qboolean            demoClient;
   qboolean            denyBuild;
   int                 denyHumanWeapons;
   int                 denyAlienClasses;
@@ -564,6 +565,15 @@ typedef struct damageRegion_s
 
   qboolean  crouch;
 } damageRegion_t;
+
+// demo commands
+typedef enum
+{
+  DC_SERVER_COMMAND = -1,
+  DC_CLIENT_SET = 0,
+  DC_CLIENT_REMOVE,
+  DC_SET_STAGE
+} demoCommand_t;
 
 #define MAX_ARMOUR_TEXT    8192
 #define MAX_ARMOUR_REGIONS 16
@@ -780,6 +790,8 @@ typedef struct
   int               mapRotationVoteTime;
 
   int               lastMsgTime;
+
+  demoState_t       demoState;
 
   pTeam_t           surrenderTeam;
   
@@ -1121,6 +1133,7 @@ void QDECL G_Error( const char *fmt, ... );
 void CheckVote( void );
 void CheckTeamVote( int teamnum );
 void LogExit( const char *string );
+void G_DemoCommand( demoCommand_t cmd, const char *string );
 int G_TimeTilSuddenDeath( void );
 int G_TimeTilExtremeSuddenDeath( void );
 void G_HitTimelimit( void );
@@ -1289,6 +1302,7 @@ extern  vmCvar_t  g_dedicated;
 extern  vmCvar_t  g_cheats;
 extern  vmCvar_t  g_maxclients;     // allow this many total, including spectators
 extern  vmCvar_t  g_maxGameClients;   // allow this many active
+extern  vmCvar_t  g_demoClients;    //sv_democlients
 extern  vmCvar_t  g_restarted;
 extern  vmCvar_t  g_lockTeamsAtStart;
 extern  vmCvar_t  g_minCommandPeriod;
@@ -1425,7 +1439,7 @@ extern  vmCvar_t  g_maraObituary;
 
 extern  vmCvar_t  g_decolorLogfiles;
 
-extern  vmCvar_t  g_maxGhostsPerIP;
+extern  vmCvar_t  g_maxIPConnections;
 
 extern  vmCvar_t  g_privateMessages;
 extern  vmCvar_t  g_buildLogMaxLength;
@@ -1542,3 +1556,4 @@ qboolean  trap_GetEntityToken( char *buffer, int bufferSize );
 void      trap_SnapVector( float *v );
 void      trap_SendGameStat( const char *data );
 int       trap_GeoIP_GetCountryName( const char* ip_address, char* dest );
+void      trap_DemoCommand( demoCommand_t cmd, const char *string );

@@ -1347,6 +1347,9 @@ void ClientUserinfoChanged( int clientNum )
         teamLeader, BG_ClientListString( &client->sess.ignoreList ) );
 
         trap_SetConfigstring( CS_PLAYERS + clientNum, userinfo );
+
+        // log to demo
+        G_DemoCommand( DC_CLIENT_SET, va( "%d %s", clientNum, userinfo ) );
    } else {
         trap_SetConfigstring( CS_PLAYERS + clientNum, "" );
    }
@@ -1423,7 +1426,7 @@ char *ClientConnect( int clientNum, qboolean firstTime )
   }
 
   // limit max clients per IP
-  if( g_maxGhostsPerIP.integer > 1 )
+  if( g_maxIPConnections.integer > 1 )
   {
     gclient_t *other;
     int count = 0;
@@ -1439,10 +1442,10 @@ char *ClientConnect( int clientNum, qboolean firstTime )
         }
     }
 
-    if( count + 1 > g_maxGhostsPerIP.integer )
+    if( count + 1 > g_maxIPConnections.integer )
     {
         G_AdminsPrintf( "Connect from client exceeds %d maximum connections per IP: '%s' NAME: '%s^7'\n",
-                        g_maxGhostsPerIP.integer, ip, Info_ValueForKey( userinfo, "name" ) );
+                        g_maxIPConnections.integer, ip, Info_ValueForKey( userinfo, "name" ) );
         return "Maximum simultaneous clients exceeded";
     }
   }
@@ -1547,6 +1550,7 @@ void ClientBegin( int clientNum )
 {
   gentity_t *ent;
   gclient_t *client;
+  char      userinfo[ MAX_INFO_STRING ];
   int       flags;
 
   ent = g_entities + clientNum;
@@ -1592,6 +1596,10 @@ void ClientBegin( int clientNum )
   }
 
   G_LogPrintf( "ClientBegin: %i\n", clientNum );
+
+  // log to demo
+  trap_GetConfigstring( CS_PLAYERS + clientNum, userinfo, sizeof(userinfo) );
+  G_DemoCommand( DC_CLIENT_SET, va( "%d %s", clientNum, userinfo ) );
 
     if( g_clientUpgradeNotice.integer )
     {
@@ -2004,6 +2012,8 @@ void ClientDisconnect( int clientNum )
   ent->client->sess.sessionTeam = TEAM_FREE;
 
   trap_SetConfigstring( CS_PLAYERS + clientNum, "");
+
+  G_DemoCommand( DC_CLIENT_REMOVE, va( "%d", clientNum ) );
 
   CalculateRanks( );
 }

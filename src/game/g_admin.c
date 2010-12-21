@@ -301,6 +301,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
       "(^5xnum^7) (^5#ID^7) (^5-name|num^7) (^5a|h^7)"
     },
 
+    {"rotation", G_admin_listrotation, "rotation",
+       "display a list of maps that are in the active map rotation",
+       ""
+    },
+
     {"seen", G_admin_seen, "seen",
       "find the last time a player was on the server",
       "[^3name|admin#^7]"
@@ -3475,6 +3480,121 @@ qboolean G_admin_listplayers( gentity_t *ent, int skiparg )
      }
   }
   ADMBP_end();
+  return qtrue;
+}
+
+qboolean G_admin_listrotation( gentity_t *ent, int skiparg )
+{
+  int i, j, statusColor;
+  char *status = '\0';
+  char mapnames[ MAX_STRING_CHARS ];
+
+  extern mapRotations_t mapRotations;
+
+  // Check for an active map rotation
+  if ( !G_MapRotationActive() ||
+       g_currentMapRotation.integer == NOT_ROTATING )
+  {
+    trap_SendServerCommand( ent-g_entities, "print \"^3!rotation: ^7There is no active map rotation on this server\n\"" );
+    return qfalse;
+  }
+
+  // Locate the active map rotation and output its contents
+  for( i = 0; i < mapRotations.numRotations; i++ )
+  {
+    if ( i == g_currentMapRotation.integer )
+    {
+      int currentMap = G_GetCurrentMap( i );
+
+      ADMBP_begin();
+      ADMBP( va( "^3!rotation: ^7%s\n", mapRotations.rotations[ i ].name ) );
+
+      for( j = 0; j < mapRotations.rotations[ i ].numMaps; j++ )
+      {
+        Q_strncpyz( mapnames, mapRotations.rotations[ i ].maps[ j ].name, sizeof( mapnames ) );
+
+        if( !Q_stricmp( mapRotations.rotations[ i ].maps[ j ].name, "*VOTE*" ) )
+        {
+          char slotMap[ 64 ];
+          int lineLen = 0;
+          int k;
+
+          trap_Cvar_VariableStringBuffer( "mapname", slotMap, sizeof( slotMap ) );
+          mapnames[ 0 ] = '\0';
+
+          for( k = 0; k < mapRotations.rotations[ i ].maps[ j ].numConditions; k++ )
+          {
+            char *thisMap;
+            int mc = 7;
+
+            if( mapRotations.rotations[ i ].maps[ j ].conditions[ k ].lhs != MCV_VOTE )
+                continue;
+
+            thisMap = mapRotations.rotations[ i ].maps[ j ].conditions[ k ].dest;
+            lineLen += strlen( thisMap ) + 1;
+
+            if( currentMap == j && !Q_stricmp( thisMap, slotMap ) )
+              mc = 3;
+
+            Q_strcat( mapnames, sizeof( mapnames ), va( "^7%s%s^%i%s",
+              ( k ) ? ", " : "",
+              ( lineLen > 50 ) ? "\n                  " : "",
+              mc, thisMap ) );
+
+            if( lineLen > 50 )
+              lineLen = strlen( thisMap ) + 2;
+            else
+              lineLen++;
+          }
+
+          if( currentMap == j )
+          {
+            statusColor = 3;
+            status = "current slot";
+          }
+          else if( !k )
+          {
+            statusColor = 1;
+            status = "empty vote";
+          }
+          else
+          {
+            statusColor = 7;
+            status = "vote";
+          }
+        }
+        else if ( currentMap == j )
+        {
+          statusColor = 3;
+          status = "current slot";
+        }
+        else if ( !G_MapExists( mapRotations.rotations[ i ].maps[ j ].name ) )
+        {
+          statusColor = 1;
+          status = "missing";
+        }
+        else
+        {
+          statusColor = 7;
+          status = "";
+        }
+        ADMBP( va( " ^%i%-12s %3i %s\n", statusColor, status, j + 1, mapnames ) );
+      }
+
+      ADMBP_end();
+
+      // No maps were found in the active map rotation
+      if ( mapRotations.rotations[ i ].numMaps < 1 )
+      {
+        trap_SendServerCommand( ent-g_entities, "print \"  - ^7Empty!\n\"" );
+        return qfalse;
+      }
+    }
+  }
+
+  if( g_nextMap.string[0] )
+      ADMP( va ("^5 Next map overriden to: %s\n", g_nextMap.string ) );
+
   return qtrue;
 }
 

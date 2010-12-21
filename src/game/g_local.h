@@ -1191,7 +1191,7 @@ void G_WriteSessionData( void );
 #define MAX_MAP_ROTATIONS       16
 #define MAX_MAP_ROTATION_MAPS   64
 #define MAX_MAP_COMMANDS        16
-#define MAX_MAP_ROTATION_CONDS  20
+#define MAX_MAP_ROTATION_CONDS  8
 
 #define NOT_ROTATING          -1
 
@@ -1265,7 +1265,8 @@ qboolean  G_StartMapRotation( char *name, qboolean changeMap );
 void      G_StopMapRotation( void );
 qboolean  G_MapRotationActive( void );
 void      G_InitMapRotations( void );
-qboolean	G_GetRandomMap(char *name, int size);
+qboolean  G_GetRandomMap(char *name, int size);
+int       G_GetCurrentMap( int rotation );
 
 qboolean G_CheckMapRotationVote( void );
 qboolean G_IntermissionMapVoteWinner( void );

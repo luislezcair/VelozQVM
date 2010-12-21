@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
-static mapRotations_t mapRotations;
+mapRotations_t mapRotations;
 
 
 static qboolean G_GetVotedMap( char *name, int size, int rotation, int map );
@@ -546,7 +546,7 @@ G_GetCurrentMap
 Return the current map in some rotation
 ===============
 */
-static int G_GetCurrentMap( int rotation )
+int G_GetCurrentMap( int rotation )
 {
   int   *p = G_GetCurrentMapArray( );
 
@@ -564,47 +564,39 @@ static void G_IssueMapChange( int rotation )
 {
   int   i;
   int   map = G_GetCurrentMap( rotation );
-  char  cmd[ MAX_TOKEN_CHARS ], mapName[MAX_STRING_CHARS], prevMapName[MAX_STRING_CHARS];
+  char  cmd[ MAX_TOKEN_CHARS ], mapName[ MAX_STRING_CHARS ];
   fileHandle_t f;
   
-  Q_strncpyz(mapName, mapRotations.rotations[rotation].maps[map].name, sizeof(mapName));
+  Q_strncpyz( mapName, mapRotations.rotations[ rotation ].maps[ map ].name, sizeof( mapName ) );
   
-  if (!Q_stricmp(mapName, "*RANDOM*"))
-		G_GetRandomMap(mapName, sizeof(mapName));
+  if ( !Q_stricmp(mapName, "*RANDOM*") )
+    G_GetRandomMap( mapName, sizeof( mapName ) );
 
-  if (!Q_stricmp(mapName, "*VOTE*"))
-    G_GetVotedMap(mapName, sizeof(mapName), rotation, map );
+  if ( !Q_stricmp( mapName, "*VOTE*" ) )
+    G_GetVotedMap( mapName, sizeof( mapName ), rotation, map );
 
   if( trap_FS_FOpenFile( va("maps/%s.bsp", mapName), &f, FS_READ ) > 0 )
     trap_FS_FCloseFile( f );
   else
   {
-		G_AdvanceMapRotation();
-		return;
+    G_AdvanceMapRotation( );
+    return;
   }
 
   // allow a manually defined g_layouts setting to override the maprotation
-  if( !g_layouts.string[ 0 ] &&
-    mapRotations.rotations[ rotation ].maps[ map ].layouts[ 0 ] )
+  if( !g_layouts.string[ 0 ] && mapRotations.rotations[ rotation ].maps[ map ].layouts[ 0 ] )
   {
-    trap_Cvar_Set( "g_layouts",
-      mapRotations.rotations[ rotation ].maps[ map ].layouts );
+    trap_Cvar_Set( "g_layouts", mapRotations.rotations[ rotation ].maps[ map ].layouts );
   }
 
-  trap_Cvar_VariableStringBuffer( "mapname", prevMapName, sizeof( prevMapName ) );
-
-  if( !Q_stricmp( prevMapName, mapName ) )
-    trap_SendConsoleCommand( EXEC_APPEND, "map_restart\n" );
-  else
-    trap_SendConsoleCommand( EXEC_APPEND, va( "map %s\n", mapName ) );
+  trap_SendConsoleCommand( EXEC_APPEND, va( "map %s\n", mapName ) );
 
   // load up map defaults if g_mapConfigs is set
   G_MapConfigs( mapName );
 
   for( i = 0; i < mapRotations.rotations[ rotation ].maps[ map ].numCmds; i++ )
   {
-    Q_strncpyz( cmd, mapRotations.rotations[ rotation ].maps[ map ].postCmds[ i ],
-                sizeof( cmd ) );
+    Q_strncpyz( cmd, mapRotations.rotations[ rotation ].maps[ map ].postCmds[ i ], sizeof( cmd ) );
     Q_strcat( cmd, sizeof( cmd ), "\n" );
     trap_SendConsoleCommand( EXEC_APPEND, cmd );
   }
@@ -735,6 +727,9 @@ qboolean G_AdvanceMapRotation( void )
           break;
 
         case MCT_ROTATION:
+          //need to increment the current map before changing the rotation
+          //or you get infinite loops with some conditionals
+          G_SetCurrentMap( nextMap, currentRotation );
           G_StartMapRotation( mrc->dest, qtrue );
           return qtrue;
           break;

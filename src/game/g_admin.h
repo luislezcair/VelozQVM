@@ -229,6 +229,7 @@ qboolean G_admin_seen(gentity_t *ent, int skiparg );
 void G_admin_seen_update( char *guid );
 
 qboolean G_admin_listmaps( gentity_t *ent, int skiparg );
+qboolean G_admin_listrotation( gentity_t *ent, int skiparg );
 qboolean G_admin_flag( gentity_t *ent, int skiparg );
 qboolean G_admin_flaglist( gentity_t *ent, int skiparg );
 qboolean G_admin_immunity( gentity_t *ent, int skiparg );

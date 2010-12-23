@@ -228,6 +228,10 @@ qboolean G_admin_L0( gentity_t *ent, int skiparg );
 qboolean G_admin_seen(gentity_t *ent, int skiparg );
 void G_admin_seen_update( char *guid );
 
+void G_admin_scrimm_switch( qboolean state );
+qboolean G_admin_scrimm( gentity_t *ent, int skiparg );
+qboolean G_admin_stage( gentity_t *ent, int skiparg );
+
 qboolean G_admin_listmaps( gentity_t *ent, int skiparg );
 qboolean G_admin_listrotation( gentity_t *ent, int skiparg );
 qboolean G_admin_flag( gentity_t *ent, int skiparg );

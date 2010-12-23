@@ -792,6 +792,7 @@ typedef struct
   int               lastMsgTime;
 
   demoState_t       demoState;
+  qboolean          scrimmMode;
 
   pTeam_t           surrenderTeam;
   
@@ -1306,6 +1307,7 @@ extern  vmCvar_t  g_maxGameClients;   // allow this many active
 extern  vmCvar_t  g_demoClients;    //sv_democlients
 extern  vmCvar_t  g_restarted;
 extern  vmCvar_t  g_lockTeamsAtStart;
+extern  vmCvar_t  g_scrimmRestarted;
 extern  vmCvar_t  g_minCommandPeriod;
 extern  vmCvar_t  g_minNameChangePeriod;
 extern  vmCvar_t  g_maxNameChanges;
@@ -1343,6 +1345,7 @@ extern  vmCvar_t  g_weaponRespawn;
 extern  vmCvar_t  g_weaponTeamRespawn;
 extern  vmCvar_t  g_synchronousClients;
 extern  vmCvar_t  g_motd;
+extern  vmCvar_t  g_scrimmMotd;
 extern  vmCvar_t  g_warmup;
 extern  vmCvar_t  g_warmupMode;
 extern  vmCvar_t  g_doWarmup;

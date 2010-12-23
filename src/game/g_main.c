@@ -75,6 +75,7 @@ vmCvar_t  g_debugAlloc;
 vmCvar_t  g_weaponRespawn;
 vmCvar_t  g_weaponTeamRespawn;
 vmCvar_t  g_motd;
+vmCvar_t  g_scrimmMotd;
 vmCvar_t  g_synchronousClients;
 vmCvar_t  g_warmup;
 vmCvar_t  g_warmupMode;
@@ -85,6 +86,7 @@ vmCvar_t  g_proximityMinesPrice;
 vmCvar_t  g_proximityMinesLiveTime;
 vmCvar_t  g_restarted;
 vmCvar_t  g_lockTeamsAtStart;
+vmCvar_t  g_scrimmRestarted;
 vmCvar_t  g_logFile;
 vmCvar_t  g_logFileSync;
 
@@ -272,6 +274,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { NULL, "gamedate", __DATE__ , CVAR_ROM, 0, qfalse  },
   { &g_restarted, "g_restarted", "0", CVAR_ROM, 0, qfalse  },
   { &g_lockTeamsAtStart, "g_lockTeamsAtStart", "0", CVAR_ROM, 0, qfalse  },
+  { &g_scrimmRestarted, "g_scrimmRestarted", "0", CVAR_ROM, 0, qfalse },
   { NULL, "sv_mapname", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
   { NULL, "P", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
   { NULL, "ff", "0", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
@@ -353,6 +356,7 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_debugDamage, "g_debugDamage", "0", 0, 0, qfalse },
   { &g_debugAlloc, "g_debugAlloc", "0", 0, 0, qfalse },
   { &g_motd, "g_motd", "", 0, 0, qfalse },
+  { &g_scrimmMotd, "g_scrimmMotd", "", 0, 0, qfalse},
 
   { &g_allowVote, "g_allowVote", "1", CVAR_ARCHIVE, 0, qfalse },
   { &g_voteLimit, "g_voteLimit", "5", CVAR_ARCHIVE, 0, qfalse },
@@ -948,6 +952,12 @@ void G_InitGame( int levelTime, int randomSeed, int restart )
     level.alienTeamLocked=qtrue;
     level.humanTeamLocked=qtrue;
     trap_Cvar_Set( "g_lockTeamsAtStart", "0" );
+  }
+  if( g_scrimmRestarted.integer )
+  {
+      level.scrimmMode = qtrue;
+      G_admin_scrimm_switch( qtrue );
+      trap_Cvar_Set( "g_scrimmRestarted", "0" );
   }
 }
 

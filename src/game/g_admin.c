@@ -306,6 +306,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
        ""
     },
 
+    {"scrimm", G_admin_scrimm, "scrimm",
+     "Turn scrimm mode ^2on^7/^1off",
+     "^7[^3on|off^7]"
+    },
+
     {"seen", G_admin_seen, "seen",
       "find the last time a player was on the server",
       "[^3name|admin#^7]"
@@ -333,6 +338,11 @@ g_admin_cmd_t g_admin_cmds[ ] =
     {"specme", G_admin_putmespec, "specme",
         "moves you to the spectators (can be done silently with the 's' argument)",
 	"(^5s^7)"
+    },
+
+    {"stage", G_admin_stage, "stage",
+     "Sets a team to a stage",
+     "[^3a|h^7] [^51|2|3^7]"
     },
 	
     {"suspendban", G_admin_suspendban, "suspendban",
@@ -2731,10 +2741,19 @@ qboolean G_admin_map( gentity_t *ent, int skiparg )
   G_admin_maplog_result( "M" );
 
   trap_SendConsoleCommand( EXEC_APPEND, va( "map %s", map ) );
+
   level.restarted = qtrue;
   AP( va( "print \"^3!map: ^7map '%s' started by %s^7 %s\n\"", map,
           ( ent ) ? ent->client->pers.netname : "console",
           ( layout[ 0 ] ) ? va( "(forcing layout '%s')", layout ) : "" ) );
+
+  if( level.scrimmMode )
+  {
+      G_admin_scrimm_switch( qfalse );
+      trap_Cvar_Set( "g_scrimmRestarted", "1" );
+      AP( "print \"^3Scrimm ^7mode is ^2ON\n\"" );
+  }
+
   return qtrue;
 }
 
@@ -4390,6 +4409,14 @@ qboolean G_admin_restart( gentity_t *ent, int skiparg )
           ( ent ) ? ent->client->pers.netname : "console",
           ( layout[ 0 ] ) ? va( "^7(forcing layout '%s^7')", layout ) : "",
           teampref ) );
+
+  if( level.scrimmMode )
+  {
+      G_admin_scrimm_switch( qfalse );
+      trap_Cvar_Set( "g_scrimmRestarted", "1" );
+      AP( "print \"^3Scrimm ^7mode is ^2ON\n\"" );
+  }
+
   return qtrue;
 }
 
@@ -7490,5 +7517,135 @@ qboolean G_admin_explode( gentity_t *ent, int skiparg )
 
     Blow_up(vic);
 
+    return qtrue;
+}
+
+typedef struct {
+    int allowVote;
+    int minLevelMM1;
+    int privMsg;
+    char motd[ MAX_STRING_CHARS ];
+} ScrimmSavedValues_t;
+
+static ScrimmSavedValues_t ssv;
+
+void G_admin_scrimm_switch( qboolean state )
+{
+    level.scrimmMode = state;
+
+    level.alienTeamLocked = state;
+    level.humanTeamLocked = state;
+
+    if( state )
+    {
+        ssv.allowVote = g_allowVote.integer;
+        ssv.minLevelMM1 = g_minLevelToSpecMM1.integer;
+        ssv.privMsg = g_privateMessages.integer;
+
+        trap_Cvar_Set( "g_allowVote", "0" );
+        trap_Cvar_Set( "g_minLevelToSpecMM1", "5" );
+        trap_Cvar_Set( "g_privateMessages", "0" );
+
+        if( g_scrimmMotd.string[ 0 ] )
+        {
+            trap_Cvar_VariableStringBuffer( "g_motd", ssv.motd, sizeof( ssv.motd ) );
+            trap_Cvar_Set( "g_motd", g_scrimmMotd.string );
+            trap_SetConfigstring( CS_MOTD, g_scrimmMotd.string );
+        }
+    }
+    else
+    {
+        trap_Cvar_Set( "g_allowVote", va("%i", ssv.allowVote) );
+        trap_Cvar_Set( "g_minLevelToSpecMM1", va("%i", ssv.minLevelMM1) );
+        trap_Cvar_Set( "g_privateMessages", va("%i", ssv.privMsg) );
+
+        if( g_scrimmMotd.string[ 0 ] )
+        {
+            trap_Cvar_Set( "g_motd", ssv.motd );
+            trap_SetConfigstring( CS_MOTD, ssv.motd );
+        }
+    }
+}
+
+qboolean G_admin_scrimm( gentity_t *ent, int skiparg )
+{
+    char s[ 4 ];
+
+    if( G_SayArgc( ) < 2 + skiparg )
+    {
+        ADMP( "^3!scrimm: ^7usage: !scrimm [on|off]\n" );
+        return qfalse;
+    }
+
+    G_SayArgv( 1 + skiparg, s, sizeof( s ) );
+
+    if( !Q_stricmp( s, "on" ) )
+    {
+        if( level.scrimmMode )
+        {
+            ADMP( "^3!scrimm: ^7Scrimm mode is already ON\n" );
+            return qfalse;
+        }
+        CP( "cp \"^3SCRIMM ^7mode is now ^2ON\"" );
+        AP( va( "print \"^3!scrimm: ^7Scrimm mode turned on by %s\n\"",
+          ( ent ) ? ent->client->pers.netname : "console" ) );
+        G_admin_scrimm_switch( qtrue );
+        return qtrue;
+
+    }
+    else if ( !Q_stricmp( s, "off" ) )
+    {
+        if( !level.scrimmMode )
+        {
+            ADMP( "^3!scrimm: ^7Scrimm mode is already OFF\n" );
+            return qfalse;
+        }
+        CP( "cp \"^3SCRIMM ^7mode is now ^1OFF\"" );
+        AP( va( "print \"^3!scrimm: ^7Scrimm mode turned off by %s\n\"",
+          ( ent ) ? ent->client->pers.netname : "console" ) );
+        G_admin_scrimm_switch( qfalse );
+        return qtrue;
+    }
+    else
+    {
+        ADMP( "^3!scrimm: ^7Invalid option. Options are on/off.\n" );
+        return qfalse;
+    }
+}
+
+qboolean G_admin_stage( gentity_t *ent, int skiparg )
+{
+    char team[ 2 ];
+    char stage_arg[ 2 ];
+    int stage = 0;
+
+    if( G_SayArgc( ) < 3 + skiparg )
+    {
+        ADMP( "^3!stage: ^7usage: !stage [a|h] [1|2|3]\n" );
+        return qfalse;
+    }
+    G_SayArgv( 1 + skiparg, team, sizeof( team ) );
+    G_SayArgv( 2 + skiparg, stage_arg, sizeof( stage_arg ) );
+
+    stage = atoi( stage_arg );
+
+    if( ( Q_stricmp("a", team) && Q_stricmp("h", team) ) || stage < S1+1 || stage > S3+1)
+    {
+        ADMP( "^3!stage: ^7invalid team or stage\n" );
+        return qfalse;
+    }
+
+    if( !Q_stricmp("a", team) )
+    {
+        trap_Cvar_Set( "g_alienStage", va("%i", stage-1) );
+        AP( va("print \"^3!stage: ^7Aliens are now stage %i\n\"", stage) );
+        return qtrue;
+    }
+    if( !Q_stricmp("h", team) )
+    {
+        trap_Cvar_Set( "g_humanStage", va("%i", stage-1) );
+        AP( va("print \"^3!stage: ^7Humans are now stage %i\n\"", stage) );
+        return qtrue;
+    }
     return qtrue;
 }

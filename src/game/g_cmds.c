@@ -5071,8 +5071,8 @@ static void Cmd_Ignore_f( gentity_t *ent )
        "print \"donate: very funny\n\"" );
      return;
    }
-   if( value > ent->client->ps.persistant[ PERS_CREDIT ] )
-     value = ent->client->ps.persistant[ PERS_CREDIT ];
+   if( value > ent->client->pers.credit )
+     value = ent->client->pers.credit;
  
    // allocate memory for distribution amounts
    amounts = G_Alloc( level.maxclients * sizeof( int ) );
@@ -5095,7 +5095,7 @@ static void Cmd_Ignore_f( gentity_t *ent )
             ent->client != level.clients + i &&
             level.clients[ i ].pers.teamSelection ==
             ent->client->pers.teamSelection ) {
-         new_credits = level.clients[ i ].ps.persistant[ PERS_CREDIT ] + portion;
+         new_credits = level.clients[ i ].pers.credit + portion;
          amounts[ i ] = portion;
          totals[ i ] += portion;
          if( new_credits > max ) {
@@ -5104,7 +5104,7 @@ static void Cmd_Ignore_f( gentity_t *ent )
            new_credits = max;
          }
          if( amounts[ i ] ) {
-           level.clients[ i ].ps.persistant[ PERS_CREDIT ] = new_credits;
+           G_AddCreditToClient( &(level.clients[ i ]), amounts[ i ], qtrue );
            donated = qtrue;
            value -= amounts[ i ];
            if( value < portion ) break;
@@ -5122,6 +5122,7 @@ static void Cmd_Ignore_f( gentity_t *ent )
      }
  
    G_Free( amounts );
+   G_Free( totals );
  
    trap_SendServerCommand( ent-g_entities,
      va( "print \"Donated %d %s to the cause.\n\"",

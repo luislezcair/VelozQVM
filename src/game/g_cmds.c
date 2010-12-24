@@ -1342,7 +1342,7 @@ static void Cmd_Say_f( gentity_t *ent )
       return;
     }
    if( !Q_stricmpn( args, "say /donate", 11 ) ||
-      !Q_stricmpn( args, "say_team /share", 16 ) )
+      !Q_stricmpn( args, "say_team /donate", 16 ) )
     {
       Cmd_Donate_f( ent );
       return;
@@ -4719,9 +4719,11 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
         // set the correct team
         G_ChangeTeam( ent, connection->clientTeam );
 
-        // set the correct credit
+        // set the correct credit, etc.
         ent->client->ps.persistant[ PERS_CREDIT ] = 0;
         G_AddCreditToClient( ent->client, connection->clientCredit, qtrue );
+        ent->client->pers.score = connection->clientScore;
+        ent->client->pers.enterTime = connection->clientEnterTime;
       }
     }
   }
@@ -4821,15 +4823,11 @@ static void Cmd_Ignore_f( gentity_t *ent )
    
    if( !g_allowShare.integer )
    {
- 	  
-    trap_SendServerCommand( ent-g_entities,
-    "print \"Share has been disabled.\n\"" );
- 
+     trap_SendServerCommand( ent-g_entities, "print \"Share has been disabled.\n\"" );
      return;
    }
 
-   if( g_floodMinTime.integer &&
-     G_Flood_Limited( ent ) )
+   if( g_floodMinTime.integer && G_Flood_Limited( ent ) )
    {
      trap_SendServerCommand( ent-g_entities, "print \"Your donations are flood-limited; wait before trying again\n\"" );
      return;
@@ -4940,7 +4938,7 @@ static void Cmd_Ignore_f( gentity_t *ent )
        {
          trap_SendServerCommand( ent-g_entities,
            "print \"usage: share [name|slot#] [amount]\n\"" );
-         break;
+         return;
        }
      }
  
@@ -4957,9 +4955,9 @@ static void Cmd_Ignore_f( gentity_t *ent )
    }
  
    // transfer only credits the player really has
-   if( creds > ent->client->ps.persistant[ PERS_CREDIT ] )
+   if( creds > ent->client->pers.credit )
    {
-     creds = ent->client->ps.persistant[ PERS_CREDIT ];
+     creds = ent->client->pers.credit;
    }
  
    // player has no credits
@@ -4972,14 +4970,14 @@ static void Cmd_Ignore_f( gentity_t *ent )
  
    // allow transfers only up to the credit/evo limit
    if( ( team == PTE_HUMANS ) && 
-       ( creds > HUMAN_MAX_CREDITS - level.clients[ clientNum ].ps.persistant[ PERS_CREDIT ] ) )
+       ( creds > HUMAN_MAX_CREDITS - level.clients[ clientNum ].pers.credit ) )
    {
-     creds = HUMAN_MAX_CREDITS - level.clients[ clientNum ].ps.persistant[ PERS_CREDIT ];
+     creds = HUMAN_MAX_CREDITS - level.clients[ clientNum ].pers.credit;
    }
    else if( ( team == PTE_ALIENS ) && 
-       ( creds > ALIEN_MAX_KILLS - level.clients[ clientNum ].ps.persistant[ PERS_CREDIT ] ) )
+       ( creds > ALIEN_MAX_KILLS - level.clients[ clientNum ].pers.credit ) )
    {
-     creds = ALIEN_MAX_KILLS - level.clients[ clientNum ].ps.persistant[ PERS_CREDIT ];
+     creds = ALIEN_MAX_KILLS - level.clients[ clientNum ].pers.credit;
    }
  
    // target cannot take any more credits
@@ -4992,12 +4990,15 @@ static void Cmd_Ignore_f( gentity_t *ent )
    }
  
    // transfer credits
-   ent->client->ps.persistant[ PERS_CREDIT ] -= creds;
+   G_AddCreditToClient( ent->client, -creds, qfalse );
+
    trap_SendServerCommand( ent-g_entities,
      va( "print \"share: transferred %d %s to %s^7.\n\"", creds,
        ( team == PTE_HUMANS ) ? "credits" : "evolvepoints",
        level.clients[ clientNum ].pers.netname ) );
-   level.clients[ clientNum ].ps.persistant[ PERS_CREDIT ] += creds;
+
+   G_AddCreditToClient( &(level.clients[ clientNum ]), creds, qtrue );
+
    trap_SendServerCommand( clientNum,
      va( "print \"You have received %d %s from %s^7.\n\"", creds,
        ( team == PTE_HUMANS ) ? "credits" : "evolvepoints",
@@ -5024,7 +5025,7 @@ static void Cmd_Ignore_f( gentity_t *ent )
  void Cmd_Donate_f( gentity_t *ent ) {
    char s[ MAX_TOKEN_CHARS ] = "", *type = "evo(s)";
    int i, value, divisor, portion, new_credits, total=0,
-     max = ALIEN_MAX_KILLS, *amounts;
+     max = ALIEN_MAX_KILLS, *amounts, *totals;
    qboolean donated = qtrue;
  
    if( !ent->client ) return;
@@ -5075,7 +5076,13 @@ static void Cmd_Ignore_f( gentity_t *ent )
  
    // allocate memory for distribution amounts
    amounts = G_Alloc( level.maxclients * sizeof( int ) );
-   for( i = 0; i < level.maxclients; i++ ) amounts[ i ] = 0;
+   totals = G_Alloc( level.maxclients * sizeof( int ) );
+
+   for( i = 0; i < level.maxclients; i++ )
+   {
+     amounts[ i ] = 0;
+     totals[ i ] = 0;
+   }
  
    // determine donation amounts for each client
    total = value;
@@ -5090,8 +5097,10 @@ static void Cmd_Ignore_f( gentity_t *ent )
             ent->client->pers.teamSelection ) {
          new_credits = level.clients[ i ].ps.persistant[ PERS_CREDIT ] + portion;
          amounts[ i ] = portion;
+         totals[ i ] += portion;
          if( new_credits > max ) {
            amounts[ i ] -= new_credits - max;
+           totals[ i ] -= new_credits - max;
            new_credits = max;
          }
          if( amounts[ i ] ) {
@@ -5106,10 +5115,10 @@ static void Cmd_Ignore_f( gentity_t *ent )
    // transfer funds
    G_AddCreditToClient( ent->client, value - total, qtrue );
    for( i = 0; i < level.maxclients; i++ )
-     if( amounts[ i ] ) {
+     if( totals[ i ] ) {
        trap_SendServerCommand( i,
          va( "print \"%s^7 donated %d %s to you, don't forget to say 'thank you'!\n\"",
-         ent->client->pers.netname, amounts[ i ], type ) );
+         ent->client->pers.netname, totals[ i ], type ) );
      }
  
    G_Free( amounts );

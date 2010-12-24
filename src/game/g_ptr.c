@@ -62,10 +62,8 @@ void G_UpdatePTRConnection( gclient_t *client )
   if( client && client->pers.connection )
   {
     client->pers.connection->clientTeam = client->pers.teamSelection;
-    if( client->pers.teamSelection == PTE_NONE )
-      client->pers.connection->clientCredit = client->pers.credit;
-    else
-      client->pers.connection->clientCredit = client->ps.persistant[ PERS_CREDIT ];
+    client->pers.connection->clientCredit = client->pers.credit;
+    client->pers.connection->clientScore = client->pers.score;
   }
 }
 
@@ -100,6 +98,7 @@ connectionRecord_t *G_GenerateNewConnection( gclient_t *client )
       connections[ i ].clientNum = client->ps.clientNum;
       client->pers.connection = &connections[ i ];
       G_UpdatePTRConnection( client );
+      client->pers.connection->clientEnterTime = client->pers.enterTime;
 
       return &connections[ i ];
     }

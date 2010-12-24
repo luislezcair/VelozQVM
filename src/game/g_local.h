@@ -325,6 +325,8 @@ typedef struct connectionRecord_s
   int       clientNum;
   pTeam_t   clientTeam;
   int       clientCredit;
+  int       clientScore;
+  int       clientEnterTime;
 
   int       ptrCode;
 } connectionRecord_t;

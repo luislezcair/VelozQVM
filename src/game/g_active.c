@@ -1580,6 +1580,9 @@ void ClientThink_real( gentity_t *ent )
   //spree decay
   ClientSpreeDecay( ent, msec );
 
+  if( client->pers.teamSelection != PTE_NONE && client->pers.joinedATeam )
+    G_UpdatePTRConnection( client );
+
   // spectators don't do much
   if( client->sess.sessionTeam == TEAM_SPECTATOR )
   {
@@ -1589,8 +1592,6 @@ void ClientThink_real( gentity_t *ent )
     SpectatorThink( ent, ucmd );
     return;
   }
-
-  G_UpdatePTRConnection( client );
 
   // check for inactivity timer, but never drop the local client of a non-dedicated server
   if( !ClientInactivityTimer( client ) )

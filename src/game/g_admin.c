@@ -1528,6 +1528,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
   char *cnf, *cnf2;
   char *t;
   qboolean level_open, admin_open, ban_open, command_open;
+  int i = 0;
 
   G_admin_cleanup();
 
@@ -1761,7 +1762,6 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
   else
   {
     char n[ MAX_NAME_LENGTH ] = {""};
-    int i = 0;
  
     // max printable name length for formatting 
     for( i = 0; i < MAX_ADMIN_LEVELS && g_admin_levels[ i ]; i++ )
@@ -1771,6 +1771,11 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
         admin_level_maxname = strlen( n );
     }
   }
+
+// reset adminLevel
+for( i = 0; i < level.maxclients; i++ )
+    if( level.clients[ i ].pers.connected != CON_DISCONNECTED )
+        level.clients[ i ].pers.adminLevel = G_admin_level( &g_entities[ i ] );
 
   return qtrue;
 }
@@ -2826,26 +2831,28 @@ qboolean G_admin_mute( gentity_t *ent, int skiparg )
   char command[ MAX_ADMIN_CMD_LEN ], *cmd;
   gentity_t *vic;
 
-  if( G_SayArgc() < 2 + skiparg )
-  {
-    ADMP( "^3!mute: ^7usage: !mute [name|slot#]\n" );
-    return qfalse;
-  }
   G_SayArgv( skiparg, command, sizeof( command ) );
   cmd = command;
   if( cmd && *cmd == '!' )
     cmd++;
+
+  if( G_SayArgc() < 2 + skiparg )
+  {
+    ADMP( va( "^3!%s: ^7usage: !%s [name|slot#]\n", cmd, cmd ) );
+    return qfalse;
+  }
+
   G_SayArgv( 1 + skiparg, name, sizeof( name ) );
   if( G_ClientNumbersFromString( name, pids ) != 1 )
   {
     G_MatchOnePlayer( pids, err, sizeof( err ) );
-    ADMP( va( "^3!mute: ^7%s\n", err ) );
+    ADMP( va( "^3!%s: ^7%s\n", cmd, err ) );
     return qfalse;
   }
   if( !admin_higher( ent, &g_entities[ pids[ 0 ] ] ) )
   {
-    ADMP( "^3!mute: ^7sorry, but your intended victim has a higher admin"
-        " level than you\n" );
+    ADMP( va( "^3!%s: ^7sorry, but your intended victim has a higher admin"
+              " level than you\n", cmd ) );
     return qfalse;
   }
   vic = &g_entities[ pids[ 0 ] ];

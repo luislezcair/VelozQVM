@@ -1669,8 +1669,12 @@ void G_CalculateStages( void )
 {
   float alienPlayerCountMod = level.averageNumAlienClients / PLAYER_COUNT_MOD;
   float humanPlayerCountMod = level.averageNumHumanClients / PLAYER_COUNT_MOD;
-  static int    lastAlienStage  = -1;
-  static int    lastHumanStage  = -1;
+
+  static int lastAlienStageModCount = 1;
+  static int lastHumanStageModCount = 1;
+
+  static int lastAlienStage = -1;
+  static int lastHumanStage = -1;
 
   if( alienPlayerCountMod < 0.1f )
     alienPlayerCountMod = 0.1f;
@@ -1684,6 +1688,8 @@ void G_CalculateStages( void )
   {
     trap_Cvar_Set( "g_alienStage", va( "%d", S2 ) );
     level.alienStage2Time = level.time;
+    lastAlienStageModCount = g_alienStage.modificationCount;
+    G_LogPrintf("Stage: A 2: Aliens reached Stage 2\n");
   }
 
   if( g_alienKills.integer >=
@@ -1692,6 +1698,8 @@ void G_CalculateStages( void )
   {
     trap_Cvar_Set( "g_alienStage", va( "%d", S3 ) );
     level.alienStage3Time = level.time;
+    lastAlienStageModCount = g_alienStage.modificationCount;
+    G_LogPrintf("Stage: A 3: Aliens reached Stage 3\n");
   }
 
   if( g_humanKills.integer >=
@@ -1700,6 +1708,8 @@ void G_CalculateStages( void )
   {
     trap_Cvar_Set( "g_humanStage", va( "%d", S2 ) );
     level.humanStage2Time = level.time;
+    lastHumanStageModCount = g_humanStage.modificationCount;
+    G_LogPrintf("Stage: H 2: Humans reached Stage 2\n");
   }
 
   if( g_humanKills.integer >=
@@ -1708,6 +1718,8 @@ void G_CalculateStages( void )
   {
     trap_Cvar_Set( "g_humanStage", va( "%d", S3 ) );
     level.humanStage3Time = level.time;
+    lastHumanStageModCount = g_humanStage.modificationCount;
+    G_LogPrintf("Stage: H 3: Humans reached Stage 3\n");
   }
 
   if ( level.demoState == DS_RECORDING &&
@@ -1717,6 +1729,29 @@ void G_CalculateStages( void )
     lastAlienStage = trap_Cvar_VariableIntegerValue( "g_alienStage" );
     lastHumanStage = trap_Cvar_VariableIntegerValue( "g_humanStage" );
     G_DemoCommand( DC_SET_STAGE, va( "%d %d", lastHumanStage, lastAlienStage ) );
+  }
+
+  if( g_alienStage.modificationCount > lastAlienStageModCount )
+  {
+    G_Checktrigger_stages( PTE_ALIENS, g_alienStage.integer );
+
+    if( g_alienStage.integer == S2 )
+        level.alienStage2Time = level.time;
+    else if( g_alienStage.integer == S3 )
+        level.alienStage3Time = level.time;
+
+    lastAlienStageModCount = g_alienStage.modificationCount;
+  }
+  if( g_humanStage.modificationCount > lastHumanStageModCount )
+  {
+    G_Checktrigger_stages( PTE_HUMANS, g_humanStage.integer );
+
+    if( g_humanStage.integer == S2 )
+        level.humanStage2Time = level.time;
+    else if( g_humanStage.integer == S3 )
+        level.humanStage3Time = level.time;
+
+    lastHumanStageModCount = g_humanStage.modificationCount;
   }
 }
 
@@ -2387,10 +2422,10 @@ void G_SendGameStat( pTeam_t team )
 
     entryLength = strlen( entry );
 
-    if( dataLength + entryLength > MAX_STRING_CHARS )
+    if( dataLength + entryLength >= BIG_INFO_STRING )
       break;
 
-    Q_strncpyz( data + dataLength, entry, BIG_INFO_STRING );
+    strcpy( data + dataLength, entry );
     dataLength += entryLength;
   }
 

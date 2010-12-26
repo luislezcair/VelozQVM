@@ -2987,7 +2987,7 @@ void Cmd_Destroy_f( gentity_t *ent )
       }
 
       // Prevent destruction of the last spawn
-      if( g_markDeconstruct.integer != 1 )
+      if( g_markDeconstruct.integer != 1 && !g_cheats.integer )
       {
         if( ent->client->pers.teamSelection == PTE_ALIENS &&
             traceEnt->s.modelindex == BA_A_SPAWN )
@@ -4613,6 +4613,9 @@ void Cmd_PTRCVerify_f( gentity_t *ent )
   int		      i;
   gentity_t *players;
 
+  if( ent->client->pers.connection )
+    return;
+
   trap_Argv( 1, s, sizeof( s ) );
 
   if( !strlen( s ) )
@@ -4640,16 +4643,16 @@ void Cmd_PTRCVerify_f( gentity_t *ent )
     }
   }
 
-  if( G_VerifyPTRC( code ) )
+  connection = G_FindConnectionForCode( code );
+  if( connection && connection->clientNum == -1 )
   {
-    connection = G_FindConnectionForCode( code );
-
     // valid code
     if( connection->clientTeam != PTE_NONE )
       trap_SendServerCommand( ent->client->ps.clientNum, "ptrcconfirm" );
 
     // restore mapping
     ent->client->pers.connection = connection;
+    connection->clientNum = ent->client->ps.clientNum;
   }
   else
   {
@@ -4679,6 +4682,12 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
   int i;
   gentity_t *players;
 
+  if( ent->client->pers.joinedATeam )
+  {
+    trap_SendServerCommand( ent - g_entities, "print \"You cannot use a PTR code after joining a team\n\"" );
+    return;
+  }
+
   trap_Argv( 1, s, sizeof( s ) );
 
   if( !strlen( s ) )
@@ -4706,31 +4715,17 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
     }
   }
   
-
-  if( G_VerifyPTRC( code ) )
+  connection = ent->client->pers.connection;
+  if( connection && connection->ptrCode == code )
   {
-    if( ent->client->pers.joinedATeam )
-    {
-      trap_SendServerCommand( ent - g_entities,
-        "print \"You cannot use a PTR code after joining a team\n\"" );
-    }
-    else
-    {
-      // valid code
-      connection = G_FindConnectionForCode( code );
+    // set the correct team
+    G_ChangeTeam( ent, connection->clientTeam );
 
-      if( connection )
-      {
-        // set the correct team
-        G_ChangeTeam( ent, connection->clientTeam );
-
-        // set the correct credit, etc.
-        ent->client->ps.persistant[ PERS_CREDIT ] = 0;
-        G_AddCreditToClient( ent->client, connection->clientCredit, qtrue );
-        ent->client->pers.score = connection->clientScore;
-        ent->client->pers.enterTime = connection->clientEnterTime;
-      }
-    }
+    // set the correct credit, etc.
+    ent->client->ps.persistant[ PERS_CREDIT ] = 0;
+    G_AddCreditToClient( ent->client, connection->clientCredit, qtrue );
+    ent->client->pers.score = connection->clientScore;
+    ent->client->pers.enterTime = connection->clientEnterTime;
   }
   else
   {
@@ -5175,8 +5170,8 @@ commands_t cmds[ ] = {
   { "kill", CMD_TEAM|CMD_LIVING, Cmd_Kill_f },
 
   // game commands
-  { "ptrcverify", 0, Cmd_PTRCVerify_f },
-  { "ptrcrestore", 0, Cmd_PTRCRestore_f },
+  { "ptrcverify", CMD_NOTEAM, Cmd_PTRCVerify_f },
+  { "ptrcrestore", CMD_NOTEAM, Cmd_PTRCRestore_f },
 
   { "follow", 0, Cmd_Follow_f },
   { "follownext", 0, Cmd_FollowCycle_f },

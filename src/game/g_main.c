@@ -67,7 +67,6 @@ vmCvar_t  g_cheats;
 vmCvar_t  g_demoState;
 vmCvar_t  g_knockback;
 vmCvar_t  g_quadfactor;
-vmCvar_t  g_forcerespawn;
 vmCvar_t  g_inactivity;
 vmCvar_t  g_debugMove;
 vmCvar_t  g_debugDamage;
@@ -350,7 +349,6 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_quadfactor, "g_quadfactor", "3", 0, 0, qtrue  },
   { &g_weaponRespawn, "g_weaponrespawn", "5", 0, 0, qtrue  },
   { &g_weaponTeamRespawn, "g_weaponTeamRespawn", "30", 0, 0, qtrue },
-  { &g_forcerespawn, "g_forcerespawn", "20", 0, 0, qtrue },
   { &g_inactivity, "g_inactivity", "0", 0, 0, qtrue },
   { &g_debugMove, "g_debugMove", "0", 0, 0, qfalse },
   { &g_debugDamage, "g_debugDamage", "0", 0, 0, qfalse },
@@ -1684,7 +1682,6 @@ void G_CalculateStages( void )
       (int)( ceil( (float)g_alienStage2Threshold.integer * alienPlayerCountMod ) ) &&
       g_alienStage.integer == S1 && g_alienMaxStage.integer > S1 )
   {
-    G_Checktrigger_stages( PTE_ALIENS, S2 );
     trap_Cvar_Set( "g_alienStage", va( "%d", S2 ) );
     level.alienStage2Time = level.time;
   }
@@ -1693,7 +1690,6 @@ void G_CalculateStages( void )
       (int)( ceil( (float)g_alienStage3Threshold.integer * alienPlayerCountMod ) ) &&
       g_alienStage.integer == S2 && g_alienMaxStage.integer > S2 )
   {
-    G_Checktrigger_stages( PTE_ALIENS, S3 );
     trap_Cvar_Set( "g_alienStage", va( "%d", S3 ) );
     level.alienStage3Time = level.time;
   }
@@ -1702,7 +1698,6 @@ void G_CalculateStages( void )
       (int)( ceil( (float)g_humanStage2Threshold.integer * humanPlayerCountMod ) ) &&
       g_humanStage.integer == S1 && g_humanMaxStage.integer > S1 )
   {
-    G_Checktrigger_stages( PTE_HUMANS, S2 );
     trap_Cvar_Set( "g_humanStage", va( "%d", S2 ) );
     level.humanStage2Time = level.time;
   }
@@ -1711,7 +1706,6 @@ void G_CalculateStages( void )
       (int)( ceil( (float)g_humanStage3Threshold.integer * humanPlayerCountMod ) ) &&
       g_humanStage.integer == S2 && g_humanMaxStage.integer > S2 )
   {
-    G_Checktrigger_stages( PTE_HUMANS, S3 );
     trap_Cvar_Set( "g_humanStage", va( "%d", S3 ) );
     level.humanStage3Time = level.time;
   }

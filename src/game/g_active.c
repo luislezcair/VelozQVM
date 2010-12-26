@@ -961,7 +961,7 @@ void ClientTimerActions( gentity_t *ent, int msec )
         }
         else if( boostEntity->s.eType == ET_BUILDABLE &&
             boostEntity->s.modelindex == BA_A_BOOSTER &&
-            boostEntity->spawned )
+            boostEntity->spawned && boostEntity->health > 0 )
         {
           modifier = BOOSTER_REGEN_MOD;
           break;
@@ -1834,6 +1834,10 @@ void ClientThink_real( gentity_t *ent )
   if( ent->client->ps.eventSequence != oldEventSequence )
     ent->eventTime = level.time;
 
+  // Don't think anymore if dead
+  if( client->ps.stats[ STAT_HEALTH ] <= 0 )
+    return;
+
   // swap and latch button actions
   client->oldbuttons = client->buttons;
   client->buttons = ucmd->buttons;
@@ -1923,29 +1927,6 @@ void ClientThink_real( gentity_t *ent )
         }
       }
     }
-  }
-
-  // check for respawning
-  if( client->ps.stats[ STAT_HEALTH ] <= 0 )
-  {
-    // wait for the attack button to be pressed
-    if( level.time > client->respawnTime )
-    {
-      // forcerespawn is to prevent users from waiting out powerups
-      if( g_forcerespawn.integer > 0 &&
-        ( level.time - client->respawnTime ) > 0 )
-      {
-        respawn( ent );
-        return;
-      }
-
-      // pressing attack or use is the normal respawn method
-      if( ucmd->buttons & ( BUTTON_ATTACK | BUTTON_USE_HOLDABLE ) )
-      {
-        respawn( ent );
-      }
-    }
-    return;
   }
 
   if( level.framenum > client->retriggerArmouryMenu && client->retriggerArmouryMenu )

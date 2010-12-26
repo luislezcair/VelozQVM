@@ -1731,7 +1731,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
     }
     else if( !Q_stricmp( t, "[command]" ) )
     {
-      if( bc >= MAX_ADMIN_COMMANDS )
+      if( cc >= MAX_ADMIN_COMMANDS )
         return qfalse;
       c = G_Alloc( sizeof( g_admin_command_t ) );
       *c->command = '\0';
@@ -4258,8 +4258,7 @@ qboolean G_admin_register(gentity_t *ent, int skiparg ){
     return qfalse;
   }
 
-
-  trap_SendConsoleCommand( EXEC_APPEND, va( "!setlevel %ld %d;", ent - g_entities, level) );
+  trap_SendConsoleCommand( EXEC_APPEND, va( "!setlevel %i %d;", (int)(ent - g_entities), level) );
   ClientUserinfoChanged( ent - g_entities );
   
   AP( va( "print \"^3!register: ^7%s^7 is now a protected nickname.\n\"", ent->client->pers.netname) );
@@ -4684,7 +4683,6 @@ qboolean G_admin_designate( gentity_t *ent, int skiparg )
    AP( va( "print \"^3!warn: ^7%s^7 has been warned to cease and desist %s by %s \n\"",
              vic->client->pers.netname, (*reason) ? reason : "his current activity",
              ( ent ) ? ent->client->pers.netname : "console" ) );//console announcement
-   ClientUserinfoChanged( pids[ 0 ] );
    return qtrue;
  }
 
@@ -4706,7 +4704,7 @@ qboolean G_admin_putmespec( gentity_t *ent, int skiparg )
     return qfalse;
   
     //guard against build timer exploit
-  if( ent->client->pers.teamSelection != PTE_NONE &&
+  if( ent->client->pers.teamSelection != PTE_NONE && ent->client->sess.sessionTeam != TEAM_SPECTATOR &&
      ( ent->client->ps.stats[ STAT_PCLASS ] == PCL_ALIEN_BUILDER0 ||
        ent->client->ps.stats[ STAT_PCLASS ] == PCL_ALIEN_BUILDER0_UPG ||
        BG_InventoryContainsWeapon( WP_HBUILD, ent->client->ps.stats ) ||
@@ -4839,14 +4837,18 @@ qboolean G_admin_slap( gentity_t *ent, int skiparg )
 */
 void G_admin_print( gentity_t *ent, char *m )
 {
-
   if( ent )
     trap_SendServerCommand( ent - level.gentities, va( "print \"%s\"", m ) );
   else
   {
     char m2[ MAX_STRING_CHARS ];
-    G_DecolorString( m, m2 );
-    G_Printf( m2 );
+    if( !trap_Cvar_VariableIntegerValue( "com_ansiColor" ) )
+    {
+        G_DecolorString( m, m2 );
+        G_Printf( m2 );
+    }
+    else
+        G_Printf( m );
   }
 }
 
@@ -5618,7 +5620,7 @@ qboolean G_admin_revert( gentity_t *ent, int skiparg )
               Com_sprintf( argbuf, sizeof argbuf, "%s%s%s%s%s%s%s!",
                   ( repeat > 1 ) ? "x" : "", ( repeat > 1 ) ? va( "%d ", repeat ) : "",
                   ( ID ) ? "#" : "", ( ID ) ? va( "%d ", ptr->ID ) : "",
-                  ( builder ) ? "-" : "", ( builder ) ? va( "%ld ", builder - g_entities ) : "",
+                  ( builder ) ? "-" : "", ( builder ) ? va( "%i ", (int)(builder - g_entities) ) : "",
                   ( team == PTE_ALIENS ) ? "a " : ( team == PTE_HUMANS ) ? "h " : "" );
               ADMP( va( "^3!revert: ^7revert aborted: reverting this %s would conflict with "
                   "another buildable, use ^3!revert %s ^7to override\n", action, argbuf ) );
@@ -5673,7 +5675,7 @@ qboolean G_admin_revert( gentity_t *ent, int skiparg )
           Com_sprintf( argbuf, sizeof argbuf, "%s%s%s%s%s%s%s!",
               ( repeat > 1 ) ? "x" : "", ( repeat > 1 ) ? va( "%d ", repeat ) : "",
               ( ID ) ? "#" : "", ( ID ) ? va( "%d ", ptr->ID ) : "",
-              ( builder ) ? "-" : "", ( builder ) ? va( "%ld ", builder - g_entities ) : "",
+              ( builder ) ? "-" : "", ( builder ) ? va( "%i ", (int)(builder - g_entities) ) : "",
               ( team == PTE_ALIENS ) ? "a " : ( team == PTE_HUMANS ) ? "h " : "" );
           ADMP( va( "^3!revert: ^7revert aborted: reverting this %s would "
               "conflict with another buildable, use ^3!revert %s ^7to override\n",

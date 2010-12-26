@@ -145,19 +145,6 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
   if( self->client->ps.pm_type == PM_DEAD )
     return;
-  
-  if(attacker->client && attacker != self && attacker->client->ps.stats[ STAT_PTEAM ]  == self->client->ps.stats[ STAT_PTEAM ] )
-  {
-    attacker->client->pers.statscounters.teamkills++;
-    if( attacker->client->pers.teamSelection == PTE_ALIENS ) 
-    {
-      level.alienStatsCounters.teamkills++;
-    }
-    else if( attacker->client->pers.teamSelection == PTE_HUMANS )
-    {
-     level.humanStatsCounters.teamkills++;
-    }
-  }
 
   if( level.intermissiontime )
     return;
@@ -174,6 +161,19 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
       killerName = attacker->client->pers.netname;
       tk = ( attacker != self && attacker->client->ps.stats[ STAT_PTEAM ] 
         == self->client->ps.stats[ STAT_PTEAM ] );
+
+      if(attacker->client && attacker != self && attacker->client->ps.stats[ STAT_PTEAM ]  == self->client->ps.stats[ STAT_PTEAM ] )
+      {
+        attacker->client->pers.statscounters.teamkills++;
+        if( attacker->client->pers.teamSelection == PTE_ALIENS )
+        {
+          level.alienStatsCounters.teamkills++;
+        }
+        else if( attacker->client->pers.teamSelection == PTE_HUMANS )
+        {
+         level.humanStatsCounters.teamkills++;
+        }
+      }
     }
     else
       killerName = "<non-client>";
@@ -1082,7 +1082,8 @@ static float G_CalcDamageModifier( vec3_t point, gentity_t *targ, gentity_t *att
   }
   else
   {
-     if( attacker->client ){
+    if( attacker && attacker->client )
+    {
         attacker->client->pers.statscounters.hitslocational++;
         level.alienStatsCounters.hitslocational++;
     }
@@ -1111,7 +1112,7 @@ static float G_CalcDamageModifier( vec3_t point, gentity_t *targ, gentity_t *att
         modifier *= g_damageRegions[ class ][ i ].modifier;
     }    
     
-    if( attacker->client && modifier == 2)
+    if( attacker && attacker->client && modifier == 2)
     {
      attacker->client->pers.statscounters.headshots++;
      level.alienStatsCounters.headshots++;
@@ -1255,7 +1256,7 @@ void G_SelectiveDamage( gentity_t *targ, gentity_t *inflictor, gentity_t *attack
 }
 
 void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
-         vec3_t dir, vec3_t point, int damage, int dflags, int mod )
+               vec3_t dir, vec3_t point, int damage, int dflags, int mod )
 {
   gclient_t *client;
   int     take;
@@ -1361,7 +1362,6 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
   // check for completely getting out of the damage
   if( !( dflags & DAMAGE_NO_PROTECTION ) )
   {
-
     // if TF_NO_FRIENDLY_FIRE is set, don't do damage to the target
     // if the attacker was on the same team
     if( targ != attacker && OnSameTeam( targ, attacker ) )
@@ -1377,9 +1377,10 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
         push[2] = 64.0f;
         VectorAdd( targ->client->ps.velocity, push, targ->client->ps.velocity );
         return;
-      } else if( !g_friendlyFireMovementAttacks.integer && (mod == MOD_LEVEL4_CHARGE || mod == MOD_LEVEL3_POUNCE )){
-	       // don't do friendly fire on movement attacks
-	       return;
+      } else if( !g_friendlyFireMovementAttacks.integer && (mod == MOD_LEVEL4_CHARGE || mod == MOD_LEVEL3_POUNCE ))
+      {
+        // don't do friendly fire on movement attacks
+        return;
       }
       else if( !g_friendlyFire.integer )
       {
@@ -1396,16 +1397,17 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
       }
     }
 
-		// If target is buildable on the same team as the attacking client
-		if( targ->s.eType == ET_BUILDABLE && attacker->client &&
-				targ->biteam == attacker->client->pers.teamSelection )
-		{
-			if( !g_friendlyBuildableFire.integer )
-				return;
-			// don't do friendly fire on movement attacks
-			 if( !g_friendlyFireMovementAttacks.integer && (mod == MOD_LEVEL4_CHARGE || mod == MOD_LEVEL3_POUNCE ))
-			return;
-		}
+    // If target is buildable on the same team as the attacking client
+    if( targ->s.eType == ET_BUILDABLE && attacker->client &&
+        targ->biteam == attacker->client->pers.teamSelection )
+    {
+        if( !g_friendlyBuildableFire.integer )
+            return;
+
+        // don't do friendly fire on movement attacks
+        if( !g_friendlyFireMovementAttacks.integer && (mod == MOD_LEVEL4_CHARGE || mod == MOD_LEVEL3_POUNCE ))
+            return;
+    }
 
     // check for godmode
     if ( targ->flags & FL_GODMODE && !g_devmapNoGod.integer)
@@ -1491,7 +1493,6 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
       targ->health, take, asave );
   }
 
-
   if( take )
   {
     if( take > targ->health ) 
@@ -1500,7 +1501,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
     }
     
     //Increment some stats counters
-    if( attacker->client )
+    if( attacker && attacker->client )
     {
       if( targ->biteam == attacker->client->pers.teamSelection || OnSameTeam( targ, attacker ) ) 
       {
@@ -1612,7 +1613,6 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
       }	
     }
 
-    
     takeNoOverkill = take;
     if( takeNoOverkill > targ->health ) 
     {

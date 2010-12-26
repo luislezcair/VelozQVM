@@ -97,7 +97,7 @@ int G_ClientNumberFromString( gentity_t *to, char *s )
 
     cl = &level.clients[ idnum ];
 
-    if( cl->pers.connected != CON_CONNECTED )
+    if( cl->pers.connected == CON_DISCONNECTED )
       return -1;
 
     return idnum;
@@ -108,7 +108,7 @@ int G_ClientNumberFromString( gentity_t *to, char *s )
 
   for( idnum = 0, cl = level.clients; idnum < level.maxclients; idnum++, cl++ )
   {
-    if( cl->pers.connected != CON_CONNECTED )
+    if( cl->pers.connected == CON_DISCONNECTED )
       continue;
 
     G_SanitiseString( cl->pers.netname, n2, sizeof( n2 ) );
@@ -1059,7 +1059,7 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText )
       return;
     }
        
-  if (g_chatTeamPrefix.integer)
+  if( g_chatTeamPrefix.integer && ent && ent->client )
   {
     switch( ent->client->pers.teamSelection)
     {
@@ -1156,13 +1156,14 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText )
 	break;
   }
   
-  if( mode!=SAY_TEAM && ent->client->pers.teamSelection == PTE_NONE && G_admin_level(ent)<g_minLevelToSpecMM1.integer )
+  if( mode != SAY_TEAM && ent && ent->client &&
+      ent->client->pers.teamSelection == PTE_NONE && G_admin_level(ent) < g_minLevelToSpecMM1.integer )
   {
     trap_SendServerCommand( ent-g_entities,va( "print \"Sorry, but your admin level may only use teamchat while spectating.\n\"") ); 
     return;
   }
 
-  Q_strncpyz( text, chatText, sizeof( text ) );
+  Com_sprintf( text, sizeof( text ), "%s^7", chatText );
 
   if( target )
   {
@@ -1524,10 +1525,10 @@ void Cmd_CallVote_f( gentity_t *ent )
     
     if( !arg3[ 0 ] )
     {
-    	if(!Q_stricmp( arg1, "slap" )) 
-	    	trap_SendServerCommand( ent-g_entities, "print \"callvote: no amount of damage specified\n\"" );
-    	else
-	      trap_SendServerCommand( ent-g_entities, "print \"callvote: no reason\n\"" );
+      if( !Q_stricmp( arg1, "slap" ) )
+        trap_SendServerCommand( ent-g_entities, "print \"callvote: no amount of damage specified\n\"" );
+      else
+        trap_SendServerCommand( ent-g_entities, "print \"callvote: no reason\n\"" );
       return;
     }
 
@@ -2415,17 +2416,17 @@ qboolean G_RoomForClassChange( gentity_t *ent, pClass_t class, vec3_t newOrigin 
   //compute a place up in the air to start the real trace
   VectorCopy( newOrigin, temp );
   temp[ 2 ] += nudgeHeight;
-  trap_Trace( &tr, newOrigin, toMins, toMaxs, temp, ent->s.number, MASK_SHOT );
+  trap_Trace( &tr, newOrigin, toMins, toMaxs, temp, ent->s.number, MASK_PLAYERSOLID );
 
   //trace down to the ground so that we can evolve on slopes
   VectorCopy( newOrigin, temp );
   temp[ 2 ] += ( nudgeHeight * tr.fraction );
-  trap_Trace( &tr, temp, toMins, toMaxs, newOrigin, ent->s.number, MASK_SHOT );
+  trap_Trace( &tr, temp, toMins, toMaxs, newOrigin, ent->s.number, MASK_PLAYERSOLID );
   VectorCopy( tr.endpos, newOrigin );
 
   //make REALLY sure
   trap_Trace( &tr, newOrigin, toMins, toMaxs, newOrigin,
-    ent->s.number, MASK_SHOT );
+    ent->s.number, MASK_PLAYERSOLID );
 
   //check there is room to evolve
   if( !tr.startsolid && tr.fraction == 1.0f )
@@ -4394,6 +4395,10 @@ void G_StopFollowing( gentity_t *ent )
   ent->client->sess.spectatorClient = -1;
   ent->client->ps.pm_flags &= ~PMF_FOLLOW;
 
+  // Prevent spawning with bsuit in rare case
+  if( BG_InventoryContainsUpgrade( UP_BATTLESUIT, ent->client->ps.stats ) )
+    BG_RemoveUpgradeFromInventory( UP_BATTLESUIT, ent->client->ps.stats );
+
   ent->client->ps.stats[ STAT_STATE ] &= ~SS_WALLCLIMBING;
   ent->client->ps.stats[ STAT_STATE ] &= ~SS_WALLCLIMBINGCEILING;
   ent->client->ps.eFlags &= ~EF_WALLCLIMB;
@@ -5549,16 +5554,18 @@ void G_PrivateMessage( gentity_t *ent )
 
     if( i > 0 )
       Q_strcat( str, sizeof( str ), "^7, " );
+
     Q_strcat( str, sizeof( str ), tmpent->client->pers.netname );
+
     trap_SendServerCommand( pids[ i ], va(
-      "chat \"%s^%c -> ^7%s^7: (%d recipients): ^%c%s^7\" %ld",
+      "chat \"%s^%c -> ^7%s^7: (%d recipients): ^%c%s^7\" %i",
       ( ent ) ? ent->client->pers.netname : "console",
       color,
       name,
       matches,
       color,
       msg,
-      ent ? ent-g_entities : -1 ) );
+      ent ? (int)(ent-g_entities) : -1 ) );
 
     trap_SendServerCommand( pids[ i ], va( 
       "cp \"^%cprivate message from ^7%s^7\"", color,

@@ -205,17 +205,17 @@ ifeq ($(PLATFORM),linux)
     BASE_CFLAGS += -I/usr/X11R6/include
   endif
 
-  OPTIMIZE = -O3 -ffast-math -funroll-loops -fomit-frame-pointer
+  OPTIMIZE = -O3 -funroll-loops -fomit-frame-pointer
 
   ifeq ($(ARCH),x86_64)
-    OPTIMIZE = -O3 -fomit-frame-pointer -ffast-math -funroll-loops \
+    OPTIMIZE = -O3 -fomit-frame-pointer -funroll-loops \
       -falign-loops=2 -falign-jumps=2 -falign-functions=2 \
       -fstrength-reduce
     # experimental x86_64 jit compiler! you need GNU as
     HAVE_VM_COMPILED = true
   else
   ifeq ($(ARCH),x86)
-    OPTIMIZE = -O3 -march=i586 -fomit-frame-pointer -ffast-math \
+    OPTIMIZE = -O3 -march=i586 -fomit-frame-pointer \
       -funroll-loops -falign-loops=2 -falign-jumps=2 \
       -falign-functions=2 -fstrength-reduce
     HAVE_VM_COMPILED=true
@@ -382,7 +382,7 @@ ifeq ($(PLATFORM),darwin)
     #CLIENT_LDFLAGS += -L/usr/X11R6/$(LIB) -lX11 -lXext -lXxf86dga -lXxf86vm
   endif
 
-  OPTIMIZE += -ffast-math -falign-loops=16
+  OPTIMIZE += -falign-loops=16
 
   ifneq ($(HAVE_VM_COMPILED),true)
     BASE_CFLAGS += -DNO_VM_COMPILED
@@ -430,7 +430,7 @@ endif
     BASE_CFLAGS += -DUSE_CODEC_VORBIS=1
   endif
 
-  OPTIMIZE = -O3 -march=i586 -fomit-frame-pointer -ffast-math -falign-loops=2 \
+  OPTIMIZE = -O3 -march=i586 -fomit-frame-pointer -falign-loops=2 \
     -funroll-loops -falign-jumps=2 -falign-functions=2 -fstrength-reduce
 
   HAVE_VM_COMPILED = true
@@ -504,12 +504,12 @@ ifeq ($(PLATFORM),freebsd)
 
   ifeq ($(ARCH),axp)
     BASE_CFLAGS += -DNO_VM_COMPILED
-    RELEASE_CFLAGS=$(BASE_CFLAGS) -DNDEBUG -O3 -ffast-math -funroll-loops \
+    RELEASE_CFLAGS=$(BASE_CFLAGS) -DNDEBUG -O3 -funroll-loops \
       -fomit-frame-pointer -fexpensive-optimizations
   else
   ifeq ($(ARCH),x86)
     RELEASE_CFLAGS=$(BASE_CFLAGS) -DNDEBUG -O3 -mtune=pentiumpro \
-      -march=pentium -fomit-frame-pointer -pipe -ffast-math \
+      -march=pentium -fomit-frame-pointer -pipe \
       -falign-loops=2 -falign-jumps=2 -falign-functions=2 \
       -funroll-loops -fstrength-reduce
     HAVE_VM_COMPILED=true
@@ -629,16 +629,16 @@ ifeq ($(PLATFORM),sunos)
     BASE_CFLAGS += -I/usr/openwin/include
   endif
 
-  OPTIMIZE = -O3 -ffast-math -funroll-loops
+  OPTIMIZE = -O3 -funroll-loops
 
   ifeq ($(ARCH),sparc)
-    OPTIMIZE = -O3 -ffast-math -falign-loops=2 \
+    OPTIMIZE = -O3 -falign-loops=2 \
       -falign-jumps=2 -falign-functions=2 -fstrength-reduce \
       -mtune=ultrasparc -mv8plus -mno-faster-structs \
       -funroll-loops
   else
   ifeq ($(ARCH),x86)
-    OPTIMIZE = -O3 -march=i586 -fomit-frame-pointer -ffast-math \
+    OPTIMIZE = -O3 -march=i586 -fomit-frame-pointer \
       -funroll-loops -falign-loops=2 -falign-jumps=2 \
       -falign-functions=2 -fstrength-reduce
     HAVE_VM_COMPILED=true

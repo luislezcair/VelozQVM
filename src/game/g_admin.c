@@ -7595,7 +7595,7 @@ qboolean G_admin_scrimm( gentity_t *ent, int skiparg )
             ADMP( "^3!scrimm: ^7Scrimm mode is already ON\n" );
             return qfalse;
         }
-        CP( "cp \"^3SCRIMM ^7mode is now ^2ON\"" );
+        trap_SendServerCommand( -1, "cp \"^3SCRIMM ^7mode is now ^2ON\"");
         AP( va( "print \"^3!scrimm: ^7Scrimm mode turned on by %s\n\"",
           ( ent ) ? ent->client->pers.netname : "console" ) );
         G_admin_scrimm_switch( qtrue );
@@ -7609,7 +7609,7 @@ qboolean G_admin_scrimm( gentity_t *ent, int skiparg )
             ADMP( "^3!scrimm: ^7Scrimm mode is already OFF\n" );
             return qfalse;
         }
-        CP( "cp \"^3SCRIMM ^7mode is now ^1OFF\"" );
+        trap_SendServerCommand( -1, "cp \"^3SCRIMM ^7mode is now ^1OFF\"");
         AP( va( "print \"^3!scrimm: ^7Scrimm mode turned off by %s\n\"",
           ( ent ) ? ent->client->pers.netname : "console" ) );
         G_admin_scrimm_switch( qfalse );

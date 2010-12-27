@@ -1302,7 +1302,7 @@ void G_SpawnClients( pTeam_t team )
   spawnQueue_t  *sq = NULL;
   int           numSpawns = 0;
 
-  if( g_doWarmup.integer && g_warmupMode.integer == 2 &&
+  if( g_doWarmup.integer && ( g_warmupMode.integer == 1 || g_warmupMode.integer == 2 ) &&
       level.time - level.startTime < g_warmup.integer * 1000 )
   {
     return;
@@ -2247,7 +2247,7 @@ void QDECL G_LogPrintf( const char *fmt, ... )
   char    string[ 1024 ], decolored[ 1024 ];
   int     min, tens, sec;
 
-  sec = level.time / 1000;
+  sec = (level.time - level.startTime) / 1000;
 
   min = sec / 60;
   sec -= min * 60;
@@ -2290,7 +2290,7 @@ void QDECL G_LogPrintfColored( const char *fmt, ... )
   char    string[ 1024 ];
   int     min, tens, sec;
 
-  sec = level.time / 1000;
+  sec = (level.time - level.startTime) / 1000;
 
   min = sec / 60;
   sec -= min * 60;
@@ -2325,7 +2325,7 @@ void QDECL G_LogOnlyPrintf( const char *fmt, ... )
   char    string[ 1024 ];
   int     min, tens, sec;
 
-  sec = level.time / 1000;
+  sec = (level.time - level.startTime) / 1000;
 
   min = sec / 60;
   sec -= min * 60;

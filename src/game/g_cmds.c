@@ -169,56 +169,47 @@ qboolean G_MatchOnePlayer( int *plist, char *err, int len )
 G_ClientNumbersFromString
 
 Sets plist to an array of integers that represent client numbers that have
-names that are a partial match for s. List is terminated by a -1.
+names that are a partial match for s.
 
-Returns number of matching clientids.
+Returns number of matching clientids up to MAX_CLIENTS.
 ==================
 */
-int G_ClientNumbersFromString( char *s, int *plist )
+int G_ClientNumbersFromString( char *s, int *plist)
 {
   gclient_t *p;
   int i, found = 0;
-  char n2[ MAX_NAME_LENGTH ] = {""}; 
-  char s2[ MAX_NAME_LENGTH ] = {""}; 
-  qboolean is_slot = qtrue;
-
-  *plist = -1;
+  char n2[ MAX_NAME_LENGTH ] = {""};
+  char s2[ MAX_NAME_LENGTH ] = {""};
+  int max = MAX_CLIENTS;
 
   // if a number is provided, it might be a slot #
-  for( i = 0; i < (int)strlen( s ); i++ )
+  for( i = 0; s[ i ] && isdigit( s[ i ] ); i++ );
+  if( !s[ i ] )
   {
-    if( s[i] < '0' || s[i] > '9' )
-    {
-      is_slot = qfalse;
-      break;
-    }
-  }
-
-  if( is_slot ) {
     i = atoi( s );
-    if( i >= 0 && i < level.maxclients ) {
+    if( i >= 0 && i < level.maxclients )
+    {
       p = &level.clients[ i ];
-      if( p->pers.connected == CON_CONNECTED ||
-        p->pers.connected == CON_CONNECTING ) 
+      if( p->pers.connected != CON_DISCONNECTED )
       {
-        *plist++ = i;
-        *plist = -1;
+        *plist = i;
         return 1;
       }
     }
     // we must assume that if only a number is provided, it is a clientNum
+    *plist = -1;
     return 0;
   }
-  
+
   // now look for name matches
   G_SanitiseString( s, s2, sizeof( s2 ) );
   if( strlen( s2 ) < 1 )
     return 0;
-  for( i = 0; i < level.maxclients; i++ )
+
+  for( i = 0; i < level.maxclients && found <= max; i++ )
   {
     p = &level.clients[ i ];
-    if(p->pers.connected != CON_CONNECTED
-      && p->pers.connected != CON_CONNECTING)
+    if( p->pers.connected == CON_DISCONNECTED )
     {
       continue;
     }
@@ -625,6 +616,9 @@ void G_LeaveTeam( gentity_t *self )
     return;
   }
 
+  // Cancel pending suicides
+  self->suicideTime = 0;
+
   // stop any following clients
   G_StopFromFollowing( self );
 
@@ -665,12 +659,18 @@ void G_ChangeTeam( gentity_t *ent, pTeam_t newTeam )
 
   G_LeaveTeam( ent );
   ent->client->pers.teamSelection = newTeam;
-  
-  
-  if ( ( level.numAlienClients - level.numHumanClients > 2 && oldTeam==PTE_ALIENS && newTeam == PTE_HUMANS && level.numHumanSpawns>0 ) ||
-       ( level.numHumanClients - level.numAlienClients > 2 && oldTeam==PTE_HUMANS && newTeam == PTE_ALIENS  && level.numAlienSpawns>0 ) ) 
+
+  // G_LeaveTeam() calls G_StopFollowing() which sets spec mode to free.
+  // Undo that in this case, or else people can freespec while in the spawn queue on their new team
+  if( newTeam != PTE_NONE )
   {
-    isFixingImbalance=qtrue;
+    ent->client->sess.spectatorState = SPECTATOR_LOCKED;
+  }
+  
+  if ( ( level.numAlienClients - level.numHumanClients > 2 && oldTeam == PTE_ALIENS && newTeam == PTE_HUMANS && level.numHumanSpawns > 0 ) ||
+       ( level.numHumanClients - level.numAlienClients > 2 && oldTeam == PTE_HUMANS && newTeam == PTE_ALIENS && level.numAlienSpawns > 0 ) )
+  {
+    isFixingImbalance = qtrue;
   }
 
   // under certain circumstances, clients can keep their kills and credits
@@ -1256,8 +1256,8 @@ static void Cmd_Say_f( gentity_t *ent )
 {
   char    *p;
   char    *args;
-  int     offset = 0;
   int     mode = SAY_ALL;
+  int     skipargs = 0;
 
   args = G_SayConcatArgs( 0 );
   if( Q_stricmpn( args, "say_team ", 9 ) == 0 )
@@ -1283,7 +1283,7 @@ static void Cmd_Say_f( gentity_t *ent )
        !Q_stricmpn( args, "say_team /say_admins ", 21) )
    {
        mode = SAY_ADMINS;
-       offset=3;
+       skipargs = 1;
    }
    
    if( mode == SAY_ADMINS)  
@@ -1306,7 +1306,7 @@ static void Cmd_Say_f( gentity_t *ent )
    if( g_allowActions.integer ) 
    { 
     mode = SAY_ACTION;
-    offset = 4;
+    skipargs = 1;
    } else return;
   }
   else if(!Q_stricmpn( args, "say_team /me ", 13 ) )
@@ -1314,7 +1314,7 @@ static void Cmd_Say_f( gentity_t *ent )
    if( g_allowActions.integer ) 
    { 
     mode = SAY_ACTION_T;
-    offset = 4;
+    skipargs = 1;
    } else return;
   }
   else if( !Q_stricmpn( args, "me ", 3 ) )
@@ -1355,9 +1355,7 @@ static void Cmd_Say_f( gentity_t *ent )
   if( trap_Argc( ) < 2 )
     return;
 
-  p = ConcatArgs( 1 );
-
-  p += offset;
+  p = G_SayConcatArgs( 1 + skipargs );
   
   G_Say( ent, NULL, mode, p );
 }
@@ -1633,7 +1631,7 @@ void Cmd_CallVote_f( gentity_t *ent )
   else if( !Q_stricmp( arg1, "map_restart" ) )
   {
     if( g_mapvoteMaxTime.integer 
-      && level.time >= g_mapvoteMaxTime.integer * 1000 
+      && (( level.time - level.startTime ) >= g_mapvoteMaxTime.integer * 1000 )
       && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) 
       && (level.numPlayingClients > 0 && level.numConnectedClients>1) )
     {
@@ -1651,7 +1649,7 @@ void Cmd_CallVote_f( gentity_t *ent )
   else if( !Q_stricmp( arg1, "map" ) )
   {
     if( g_mapvoteMaxTime.integer 
-      && level.time >= g_mapvoteMaxTime.integer * 1000 
+      && (( level.time - level.startTime ) >= g_mapvoteMaxTime.integer * 1000 )
       && !G_admin_permission( ent, ADMF_NO_VOTE_LIMIT ) 
       && (level.numPlayingClients > 0 && level.numConnectedClients>1) )
     {
@@ -4376,6 +4374,7 @@ void G_StopFollowing( gentity_t *ent )
   {
     ent->client->sess.spectatorState = SPECTATOR_FREE;
     ent->client->ps.pm_type = PM_SPECTATOR;
+    ent->client->ps.stats[ STAT_HEALTH ] = 100; // hacky server-side fix to prevent cgame from viewlocking a freespec
   }
   else
   {

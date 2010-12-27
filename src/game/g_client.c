@@ -905,7 +905,7 @@ team_t TeamCount( int ignoreClientNum, int team )
 
 /*
 ===========
-ClientCheckName
+ClientCleanName
 ============
 */
 static void ClientCleanName( const char *in, char *out, int outSize )
@@ -1051,7 +1051,7 @@ static qboolean G_NonSegModel( const char *filename )
     return qfalse;
   }
 
-  if( len <= 0 )
+  if( len < 0 )
     return qfalse;
 
   if( len == 0 || len >= sizeof( text ) - 1 )

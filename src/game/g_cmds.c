@@ -1083,7 +1083,7 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText )
   {
     default:
     case SAY_ALL:
-      G_LogPrintf( "say: %s^7: %s^7\n", ent->client->pers.netname, chatText );
+      G_LogPrintf( "say: \"%s" S_COLOR_WHITE "\": " S_COLOR_GREEN "%s\n", ent->client->pers.netname, chatText );
       Com_sprintf( name, sizeof( name ), "%s%s%c%c"EC": ", prefix,
                    ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE );
       color = COLOR_GREEN;

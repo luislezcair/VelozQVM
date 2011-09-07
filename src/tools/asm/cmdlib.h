@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
+Copyright (C) 2000-2009 Darklegion Development
 
 This file is part of Tremulous.
 
@@ -115,14 +115,6 @@ void 	ExtractFileBase( const char *path, char *dest );
 void	ExtractFileExtension( const char *path, char *dest );
 
 int 	ParseNum (const char *str);
-
-short	BigShort (short l);
-short	LittleShort (short l);
-int		BigLong (int l);
-int		LittleLong (int l);
-float	BigFloat (float l);
-float	LittleFloat (float l);
-
 
 char *COM_Parse (char *data);
 

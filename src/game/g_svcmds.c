@@ -97,75 +97,6 @@ void  Svcmd_EntityList_f( void )
   }
 }
 
-gclient_t *ClientForString( const char *s )
-{
-  gclient_t *cl;
-  int       i;
-  int       idnum;
-
-  // numeric values are just slot numbers
-  if( s[ 0 ] >= '0' && s[ 0 ] <= '9' )
-  {
-    idnum = atoi( s );
-
-    if( idnum < 0 || idnum >= level.maxclients )
-    {
-      Com_Printf( "Bad client slot: %i\n", idnum );
-      return NULL;
-    }
-
-    cl = &level.clients[ idnum ];
-
-    if( cl->pers.connected == CON_DISCONNECTED )
-    {
-      G_Printf( "Client %i is not connected\n", idnum );
-      return NULL;
-    }
-
-    return cl;
-  }
-
-  // check for a name match
-  for( i = 0; i < level.maxclients; i++ )
-  {
-    cl = &level.clients[ i ];
-    if( cl->pers.connected == CON_DISCONNECTED )
-      continue;
-
-    if( !Q_stricmp( cl->pers.netname, s ) )
-      return cl;
-  }
-
-  G_Printf( "User %s is not on the server\n", s );
-
-  return NULL;
-}
-
-/*
-===================
-Svcmd_ForceTeam_f
-
-forceteam <player> <team>
-===================
-*/
-void  Svcmd_ForceTeam_f( void )
-{
-  gclient_t *cl;
-  char      str[ MAX_TOKEN_CHARS ];
-
-  // find the player
-  trap_Argv( 1, str, sizeof( str ) );
-  cl = ClientForString( str );
-
-  if( !cl )
-    return;
-
-  // set the team
-  trap_Argv( 2, str, sizeof( str ) );
-  /*SetTeam( &g_entities[cl - level.clients], str );*/
-  //FIXME: tremulise this
-}
-
 /*
 ===================
 Svcmd_LayoutSave_f
@@ -182,7 +113,7 @@ void  Svcmd_LayoutSave_f( void )
 
   if( trap_Argc( ) != 2 )
   {
-    G_Printf( "usage: layoutsave LAYOUTNAME\n" );
+    G_Printf( "usage: layoutsave <name>\n" );
     return;
   }
   trap_Argv( 1, str, sizeof( str ) );
@@ -191,9 +122,7 @@ void  Svcmd_LayoutSave_f( void )
   s = &str[ 0 ];
   while( *s && i < sizeof( str2 ) - 1 )
   {
-    if( ( *s >= '0' && *s <= '9' ) ||
-      ( *s >= 'a' && *s <= 'z' ) ||
-      ( *s >= 'A' && *s <= 'Z' ) || *s == '-' || *s == '_' )
+    if( isalnum( *s ) || *s == '-' || *s == '_' )
     {
       str2[ i++ ] = *s;
       str2[ i ] = '\0';
@@ -235,32 +164,7 @@ void  Svcmd_LayoutLoad_f( void )
   level.restarted = qtrue;
 }
 
-/*
-===================
-Svcmd_NobuildSave_f
-
-nobuildsave
-===================
-*/
-void  Svcmd_NobuildSave_f( void )
-{
-  G_NobuildSave();
-}
-
 char  *ConcatArgs( int start );
-
-/*
-===================
-Svcmd_NobuildLoad_f
-
-nobuildload
-
-===================
-*/
-void  Svcmd_NobuildLoad_f( void )
-{
-  G_NobuildLoad();
-}
 
 static void Svcmd_AdmitDefeat_f( void )
 {
@@ -385,15 +289,14 @@ struct svcmd
     { "cp", qtrue, Svcmd_CenterPrint_f },
     { "entitylist", qfalse, Svcmd_EntityList_f },
     { "evacuation", qfalse, Svcmd_Evacuation_f },
-    { "forceteam", qfalse, Svcmd_ForceTeam_f },
     { "game_memory", qfalse, Svcmd_GameMem_f },
     { "humanWin", qfalse, Svcmd_HumanWin_f },
     { "layoutload", qfalse, Svcmd_LayoutLoad_f },
     { "layoutsave", qfalse, Svcmd_LayoutSave_f },
     { "m", qtrue, Svcmd_MessageWrapper },
     { "mapRotation", qfalse, Svcmd_MapRotation_f },
-    { "nobuildload", qfalse, Svcmd_NobuildLoad_f },
-    { "nobuildsave", qfalse, Svcmd_NobuildSave_f },
+    { "nobuildload", qfalse, G_NobuildLoad },
+    { "nobuildsave", qfalse, G_NobuildSave },
     { "say", qtrue, Svcmd_MessageWrapper },
     { "say_admins", qtrue, Svcmd_MessageWrapper },
     { "stopMapRotation", qfalse, G_StopMapRotation }

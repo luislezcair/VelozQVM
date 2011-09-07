@@ -739,7 +739,7 @@ G_AdvanceMapRotation
 Increment the current map rotation
 ===============
 */
-qboolean G_AdvanceMapRotation( void )
+void G_AdvanceMapRotation( void )
 {
   mapRotation_t           *mr;
   mapRotationEntry_t      *mre;
@@ -749,7 +749,7 @@ qboolean G_AdvanceMapRotation( void )
   mapConditionType_t      mct;
 
   if( ( currentRotation = g_currentMapRotation.integer ) == NOT_ROTATING )
-    return qfalse;
+    return;
 
   currentMap = G_GetCurrentMap( currentRotation );
 
@@ -776,8 +776,7 @@ qboolean G_AdvanceMapRotation( void )
           //or you get infinite loops with some conditionals
           G_SetCurrentMap( nextMap, currentRotation );
           G_StartMapRotation( mrc->dest, qtrue );
-          return qtrue;
-          break;
+          return;
 
         default:
         case MCT_ERR:
@@ -790,8 +789,6 @@ qboolean G_AdvanceMapRotation( void )
 
   G_SetCurrentMap( nextMap, currentRotation );
   G_IssueMapChange( currentRotation );
-
-  return qtrue;
 }
 
 /*

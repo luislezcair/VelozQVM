@@ -1334,3 +1334,9 @@ void BG_UpdateUpgradeData(int proximityMine, int price);
 #define FFF_HUMANS         1
 #define FFF_ALIENS         2
 #define FFF_BUILDABLES     4
+
+typedef struct
+{
+  const char *name;
+} dummyCmd_t;
+int cmdcmp( const void *a, const void *b );

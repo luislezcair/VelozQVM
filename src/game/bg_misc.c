@@ -5772,3 +5772,8 @@ void BG_ClientListParse( clientList_t *list, const char *s )
     return;
   sscanf( s, "%x%x", &list->hi, &list->lo );
 }
+
+int cmdcmp( const void *a, const void *b )
+{
+  return Q_stricmp( (const char *)a, ((dummyCmd_t *)b)->name );
+}

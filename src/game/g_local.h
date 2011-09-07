@@ -1102,8 +1102,8 @@ char     *G_NextNewbieName( gentity_t *ent );
 // g_svcmds.c
 //
 qboolean  ConsoleCommand( void );
-void      G_ProcessIPBans( void );
-qboolean  G_FilterPacket( char *from );
+//void      G_ProcessIPBans( void );
+//qboolean  G_FilterPacket( char *from );
 
 //
 // g_weapon.c
@@ -1263,7 +1263,7 @@ typedef struct mapRotations_s
 
 qboolean  G_MapExists( char *name );
 void      G_PrintRotations( void );
-qboolean  G_AdvanceMapRotation( void );
+void      G_AdvanceMapRotation( void );
 qboolean  G_StartMapRotation( char *name, qboolean changeMap );
 void      G_StopMapRotation( void );
 qboolean  G_MapRotationActive( void );
@@ -1370,8 +1370,6 @@ extern  vmCvar_t  g_admitDefeatVotePercent;
 extern  vmCvar_t  g_admitDefeatTime;
 extern  vmCvar_t  g_teamAutoJoin;
 extern  vmCvar_t  g_teamForceBalance;
-extern  vmCvar_t  g_banIPs;
-extern  vmCvar_t  g_filterBan;
 extern  vmCvar_t  g_smoothClients;
 extern  vmCvar_t  g_clientUpgradeNotice;
 extern  vmCvar_t  pmove_fixed;

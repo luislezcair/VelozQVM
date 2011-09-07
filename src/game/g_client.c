@@ -1416,8 +1416,6 @@ char *ClientConnect( int clientNum, qboolean firstTime )
     value++;
   }
   ip[ i ] = '\0';
-  if( G_FilterPacket( value ) )
-    return "You are banned from this server.";
 
   if( strlen( ip ) < 7 )
   {

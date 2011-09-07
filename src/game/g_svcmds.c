@@ -25,315 +25,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
-
-/*
-==============================================================================
-
-PACKET FILTERING
-
-
-You can add or remove addresses from the filter list with:
-
-addip <ip>
-removeip <ip>
-
-The ip address is specified in dot format, and you can use '*' to match any value
-so you can specify an entire class C network with "addip 192.246.40.*"
-
-Removeip will only remove an address specified exactly the same way.  You cannot addip a subnet, then removeip a single host.
-
-listip
-Prints the current list of filters.
-
-g_filterban <0 or 1>
-
-If 1 (the default), then ip addresses matching the current list will be prohibited from entering the game.  This is the default setting.
-
-If 0, then only addresses matching the list will be allowed.  This lets you easily set up a private game, or a game that only allows players from your local network.
-
-TTimo NOTE: for persistence, bans are stored in g_banIPs cvar MAX_CVAR_VALUE_STRING
-The size of the cvar string buffer is limiting the banning to around 20 masks
-this could be improved by putting some g_banIPs2 g_banIps3 etc. maybe
-still, you should rely on PB for banning instead
-
-==============================================================================
-*/
-
-// extern vmCvar_t  g_banIPs;
-// extern vmCvar_t  g_filterBan;
-
-
-typedef struct ipFilter_s
-{
-  unsigned  mask;
-  unsigned  compare;
-} ipFilter_t;
-
-#define MAX_IPFILTERS 1024
-
-static ipFilter_t ipFilters[ MAX_IPFILTERS ];
-static int        numIPFilters;
-
-/*
-=================
-StringToFilter
-=================
-*/
-static qboolean StringToFilter( char *s, ipFilter_t *f )
-{
-  char  num[ 128 ];
-  int   i, j;
-  byte  b[ 4 ];
-  byte  m[ 4 ];
-
-  for( i = 0; i < 4; i++ )
-  {
-    b[ i ] = 0;
-    m[ i ] = 0;
-  }
-
-  for( i = 0; i < 4; i++ )
-  {
-    if( *s < '0' || *s > '9' )
-    {
-      if( *s == '*' ) // 'match any'
-      {
-        //b[ i ] and m[ i ] to 0
-        s++;
-        if ( !*s )
-          break;
-
-        s++;
-        continue;
-      }
-
-      G_Printf( "Bad filter address: %s\n", s );
-      return qfalse;
-    }
-
-    j = 0;
-    while( *s >= '0' && *s <= '9' )
-      num[ j++ ] = *s++;
-
-    num[ j ] = 0;
-    b[ i ] = atoi( num );
-
-    m[ i ] = 255;
-
-    if( !*s )
-      break;
-
-    s++;
-  }
-
-  f->mask = *(unsigned *)m;
-  f->compare = *(unsigned *)b;
-
-  return qtrue;
-}
-
-/*
-=================
-UpdateIPBans
-=================
-*/
-static void UpdateIPBans( void )
-{
-  byte  b[ 4 ];
-  byte  m[ 4 ];
-  int    i, j;
-  char  iplist_final[ MAX_CVAR_VALUE_STRING ];
-  char  ip[ 64 ];
-
-  *iplist_final = 0;
-
-  for( i = 0 ; i < numIPFilters ; i++ )
-  {
-    if( ipFilters[ i ].compare == 0xffffffff )
-      continue;
-
-    *(unsigned *)b = ipFilters[ i ].compare;
-    *(unsigned *)m = ipFilters[ i ].mask;
-    *ip = 0;
-
-    for( j = 0 ; j < 4 ; j++ )
-    {
-      if( m[ j ] != 255 )
-        Q_strcat( ip, sizeof( ip ), "*" );
-      else
-        Q_strcat( ip, sizeof( ip ), va( "%i", b[ j ] ) );
-
-      Q_strcat( ip, sizeof( ip ), ( j < 3 ) ? "." : " " );
-    }
-
-    if( strlen( iplist_final ) + strlen( ip ) < MAX_CVAR_VALUE_STRING )
-      Q_strcat( iplist_final, sizeof( iplist_final ), ip );
-    else
-    {
-      Com_Printf( "g_banIPs overflowed at MAX_CVAR_VALUE_STRING\n" );
-      break;
-    }
-  }
-
-  trap_Cvar_Set( "g_banIPs", iplist_final );
-}
-
-/*
-=================
-G_FilterPacket
-=================
-*/
-qboolean G_FilterPacket( char *from )
-{
-  int       i;
-  unsigned  in;
-  byte      m[ 4 ];
-  char      *p;
-
-  i = 0;
-  p = from;
-  while( *p && i < 4 )
-  {
-    m[ i ] = 0;
-    while( *p >= '0' && *p <= '9' )
-    {
-      m[ i ] = m[ i ] * 10 + ( *p - '0' );
-      p++;
-    }
-
-    if( !*p || *p == ':' )
-      break;
-
-    i++, p++;
-  }
-
-  in = *(unsigned *)m;
-
-  for( i = 0; i < numIPFilters; i++ )
-    if( ( in & ipFilters[ i ].mask ) == ipFilters[ i ].compare )
-      return g_filterBan.integer != 0;
-
-  return g_filterBan.integer == 0;
-}
-
-/*
-=================
-AddIP
-=================
-*/
-static void AddIP( char *str )
-{
-  int   i;
-
-  for( i = 0 ; i < numIPFilters ; i++ )
-    if( ipFilters[ i ].compare == 0xffffffff )
-      break;    // free spot
-
-  if( i == numIPFilters )
-  {
-    if( numIPFilters == MAX_IPFILTERS )
-    {
-      G_Printf( "IP filter list is full\n" );
-      return;
-    }
-
-    numIPFilters++;
-  }
-
-  if( !StringToFilter( str, &ipFilters[ i ] ) )
-    ipFilters[ i ].compare = 0xffffffffu;
-
-  UpdateIPBans( );
-}
-
-/*
-=================
-G_ProcessIPBans
-=================
-*/
-void G_ProcessIPBans( void )
-{
-  char *s, *t;
-  char str[ MAX_CVAR_VALUE_STRING ];
-
-  Q_strncpyz( str, g_banIPs.string, sizeof( str ) );
-
-  for( t = s = g_banIPs.string; *t; /* */ )
-  {
-    s = strchr( s, ' ' );
-
-    if( !s )
-      break;
-
-    while( *s == ' ' )
-      *s++ = 0;
-
-    if( *t )
-      AddIP( t );
-
-    t = s;
-  }
-}
-
-
-/*
-=================
-Svcmd_AddIP_f
-=================
-*/
-void Svcmd_AddIP_f( void )
-{
-  char str[ MAX_TOKEN_CHARS ];
-
-  if( trap_Argc( ) < 2 )
-  {
-    G_Printf( "Usage:  addip <ip-mask>\n" );
-    return;
-  }
-
-  trap_Argv( 1, str, sizeof( str ) );
-
-  AddIP( str );
-}
-
-/*
-=================
-Svcmd_RemoveIP_f
-=================
-*/
-void Svcmd_RemoveIP_f( void )
-{
-  ipFilter_t  f;
-  int         i;
-  char        str[ MAX_TOKEN_CHARS ];
-
-  if( trap_Argc( ) < 2 )
-  {
-    G_Printf( "Usage:  sv removeip <ip-mask>\n" );
-    return;
-  }
-
-  trap_Argv( 1, str, sizeof( str ) );
-
-  if( !StringToFilter( str, &f ) )
-    return;
-
-  for( i = 0; i < numIPFilters; i++ )
-  {
-    if( ipFilters[ i ].mask == f.mask &&
-        ipFilters[ i ].compare == f.compare)
-    {
-      ipFilters[ i ].compare = 0xffffffffu;
-      G_Printf ( "Removed.\n" );
-
-      UpdateIPBans( );
-      return;
-    }
-  }
-
-  G_Printf ( "Didn't find %s.\n", str );
-}
-
 /*
 ===================
 Svcmd_EntityList_f
@@ -603,81 +294,18 @@ static void Svcmd_AdmitDefeat_f( void )
   } 
 }
 
-/*
-=================
-ConsoleCommand
-
-=================
-*/
-qboolean  ConsoleCommand( void )
+static void Svcmd_Evacuation_f( void )
 {
-  char cmd[ MAX_TOKEN_CHARS ];
+    trap_SendServerCommand( -1, "print \"Evacuation ordered\n\"" );
+    level.lastWin = PTE_NONE;
+    trap_SetConfigstring( CS_WINNER, "Evacuation" );
+    LogExit( "Evacuation." );
+    G_admin_maplog_result( "d" );
+}
 
-  trap_Argv( 0, cmd, sizeof( cmd ) );
-
-  if( Q_stricmp( cmd, "entitylist" ) == 0 )
-  {
-    Svcmd_EntityList_f( );
-    return qtrue;
-  }
-
-  if( Q_stricmp( cmd, "forceteam" ) == 0 )
-  {
-    Svcmd_ForceTeam_f( );
-    return qtrue;
-  }
-
-  if( Q_stricmp( cmd, "game_memory" ) == 0 )
-  {
-    Svcmd_GameMem_f( );
-    return qtrue;
-  }
-
-  if( Q_stricmp( cmd, "addip" ) == 0 )
-  {
-    Svcmd_AddIP_f( );
-    return qtrue;
-  }
-
-  if( Q_stricmp( cmd, "removeip" ) == 0 )
-  {
-    Svcmd_RemoveIP_f( );
-    return qtrue;
-  }
-
-  if( Q_stricmp( cmd, "listip" ) == 0 )
-  {
-    trap_SendConsoleCommand( EXEC_NOW, "g_banIPs\n" );
-    return qtrue;
-  }
-
-  if( Q_stricmp( cmd, "mapRotation" ) == 0 )
-  {
-    char *rotationName = ConcatArgs( 1 );
-
-    if( !G_StartMapRotation( rotationName, qfalse ) )
-      G_Printf( "Can't find map rotation %s\n", rotationName );
-
-    return qtrue;
-  }
-
-  if( Q_stricmp( cmd, "stopMapRotation" ) == 0 )
-  {
-    G_StopMapRotation( );
-
-    return qtrue;
-  }
-
-  if( Q_stricmp( cmd, "advanceMapRotation" ) == 0 )
-  {
-    G_AdvanceMapRotation( );
-
-    return qtrue;
-  }
-
-  if( Q_stricmp( cmd, "alienWin" ) == 0 )
-  {
-    int       i;
+static void Svcmd_AlienWin_f( void )
+{
+    int i;
     gentity_t *e;
 
     for( i = 1, e = g_entities + i; i < level.num_entities; i++, e++ )
@@ -685,13 +313,11 @@ qboolean  ConsoleCommand( void )
       if( e->s.modelindex == BA_H_SPAWN )
         G_Damage( e, NULL, NULL, NULL, NULL, 10000, 0, MOD_SUICIDE );
     }
+}
 
-    return qtrue;
-  }
-
-  if( Q_stricmp( cmd, "humanWin" ) == 0 )
-  {
-    int       i;
+static void Svcmd_HumanWin_f( void )
+{
+    int i;
     gentity_t *e;
 
     for( i = 1, e = g_entities + i; i < level.num_entities; i++, e++ )
@@ -699,92 +325,111 @@ qboolean  ConsoleCommand( void )
       if( e->s.modelindex == BA_A_SPAWN )
         G_Damage( e, NULL, NULL, NULL, NULL, 10000, 0, MOD_SUICIDE );
     }
-
-    return qtrue;
-  }
-
-  if( !Q_stricmp( cmd, "layoutsave" ) )
-  {
-    Svcmd_LayoutSave_f( );
-    return qtrue;
-  }
-  
-  if( !Q_stricmp( cmd, "layoutload" ) )
-  {
-    Svcmd_LayoutLoad_f( );
-    return qtrue;
-  }
-  
-  if( !Q_stricmp( cmd, "nobuildsave" ) )
-  {
-    Svcmd_NobuildSave_f( );
-    return qtrue;
-  }
-  
-  if( !Q_stricmp( cmd, "nobuildload" ) )
-  {
-    Svcmd_NobuildLoad_f( );
-    return qtrue;
-  }
-  
-  if( !Q_stricmp( cmd, "admitdefeat" ) )
-  {
-    Svcmd_AdmitDefeat_f( );
-    return qtrue;
-  }
-
-  if( !Q_stricmp( cmd, "evacuation" ) )
-  {
-    trap_SendServerCommand( -1, "print \"Evacuation ordered\n\"" );
-    level.lastWin = PTE_NONE;
-    trap_SetConfigstring( CS_WINNER, "Evacuation" );
-    LogExit( "Evacuation." );
-    G_admin_maplog_result( "d" );
-    return qtrue;
-  }
-  
-  // see if this is a a admin command
-  if( G_admin_cmd_check( NULL, qfalse ) )
-    return qtrue;
-
-  if( g_dedicated.integer )
-  {
-    if( Q_stricmp( cmd, "say" ) == 0 )
-    {
-      trap_SendServerCommand( -1, va( "print \"server: %s\n\"", ConcatArgs( 1 ) ) );
-      return qtrue;
-    }
-    else if( !Q_stricmp( cmd, "chat" ) )
-    {
-      trap_SendServerCommand( -1, va( "chat \"%s\" -1 0", ConcatArgs( 1 ) ) );
-      G_Printf( "chat: %s\n", ConcatArgs( 1 ) );
-      return qtrue;
-    }
-    else if( !Q_stricmp( cmd, "cp" ) )
-    {
-      char buffer[MAX_STRING_CHARS];
-      Q_strncpyz( buffer, ConcatArgs( 1 ), sizeof( buffer ) );
-      G_ParseEscapedString( buffer );
-      trap_SendServerCommand( -1, va( "cp \"%s\"", buffer ) );
-      trap_SendServerCommand( -1, va( "print \"CP: %s\n\"", buffer ) );
-      G_Printf( "cp: %s\n", ConcatArgs( 1 ) );
-      return qtrue;
-    }
-    else if( !Q_stricmp( cmd, "m" ) )
-    {
-      G_PrivateMessage( NULL );
-      return qtrue;
-    }    
-    else if( !Q_stricmp( cmd, "a" ) || !Q_stricmp( cmd, "say_admins" ))
-    {
-      G_Say( NULL, NULL, SAY_ADMINS, ConcatArgs( 1 )  );
-      return qtrue;
-    }
-
-    G_Printf( "unknown command: %s\n", cmd );
-    return qtrue;
-  }
-
-  return qfalse;
 }
 
+static void Svcmd_CenterPrint_f( void )
+{
+    char buffer[MAX_STRING_CHARS];
+
+    Q_strncpyz( buffer, ConcatArgs( 1 ), sizeof( buffer ) );
+    G_ParseEscapedString( buffer );
+    trap_SendServerCommand( -1, va( "cp \"%s\"", buffer ) );
+    trap_SendServerCommand( -1, va( "print \"CP: %s\n\"", buffer ) );
+    G_Printf( "cp: %s\n", ConcatArgs( 1 ) );
+}
+
+static void Svcmd_MessageWrapper( void )
+{
+  char cmd[ 5 ];
+  trap_Argv( 0, cmd, sizeof( cmd ) );
+
+  if( !Q_stricmp( cmd, "a" ) || !Q_stricmp( cmd, "say_admins") )
+    G_Say( NULL, NULL, SAY_ADMINS, ConcatArgs( 1 )  );
+  else if( !Q_stricmp( cmd, "m" ) )
+    G_PrivateMessage( NULL );
+  else if( !Q_stricmp( cmd, "say" ) )
+    trap_SendServerCommand( -1, va( "print \"server: %s\n\"", ConcatArgs( 1 ) ) );
+  else if( !Q_stricmp( cmd, "chat" ) )
+  {
+    trap_SendServerCommand( -1, va( "chat \"%s\" -1 0", ConcatArgs( 1 ) ) );
+    G_Printf( "chat: %s\n", ConcatArgs( 1 ) );
+  }
+}
+
+static void Svcmd_MapRotation_f( void )
+{
+  char rotationName[ MAX_QPATH ];
+
+  if( trap_Argc( ) != 2 )
+  {
+    G_Printf( "usage: maprotation <name>\n" );
+    return;
+  }
+
+  trap_Argv( 1, rotationName, sizeof( rotationName ) );
+  if( !G_StartMapRotation( rotationName, qfalse ) )
+    G_Printf( "maprotation: invalid map rotation \"%s\"\n", rotationName );
+}
+
+struct svcmd
+{
+  char     *cmd;
+  qboolean dedicated;
+  void     ( *function )( void );
+} svcmds[ ] = {
+    { "a", qtrue, Svcmd_MessageWrapper },
+    { "admitdefeat", qfalse, Svcmd_AdmitDefeat_f },
+    { "advanceMapRotation", qfalse, G_AdvanceMapRotation },
+    { "alienWin", qfalse, Svcmd_AlienWin_f },
+    { "chat", qtrue, Svcmd_MessageWrapper },
+    { "cp", qtrue, Svcmd_CenterPrint_f },
+    { "entitylist", qfalse, Svcmd_EntityList_f },
+    { "evacuation", qfalse, Svcmd_Evacuation_f },
+    { "forceteam", qfalse, Svcmd_ForceTeam_f },
+    { "game_memory", qfalse, Svcmd_GameMem_f },
+    { "humanWin", qfalse, Svcmd_HumanWin_f },
+    { "layoutload", qfalse, Svcmd_LayoutLoad_f },
+    { "layoutsave", qfalse, Svcmd_LayoutSave_f },
+    { "m", qtrue, Svcmd_MessageWrapper },
+    { "mapRotation", qfalse, Svcmd_MapRotation_f },
+    { "nobuildload", qfalse, Svcmd_NobuildLoad_f },
+    { "nobuildsave", qfalse, Svcmd_NobuildSave_f },
+    { "say", qtrue, Svcmd_MessageWrapper },
+    { "say_admins", qtrue, Svcmd_MessageWrapper },
+    { "stopMapRotation", qfalse, G_StopMapRotation }
+};
+
+/*
+=================
+ConsoleCommand
+
+=================
+*/
+qboolean ConsoleCommand( void )
+{
+  char cmd[ MAX_TOKEN_CHARS ];
+  struct svcmd *command;
+
+  trap_Argv( 0, cmd, sizeof( cmd ) );
+
+  command = bsearch( cmd, svcmds, sizeof( svcmds ) / sizeof( struct svcmd ),
+    sizeof( struct svcmd ), cmdcmp );
+
+  if( !command )
+  {
+    // see if this is an admin command
+    if( G_admin_cmd_check( NULL, qfalse ) )
+      return qtrue;
+
+    if( g_dedicated.integer )
+      G_Printf( "unknown command: %s\n", cmd );
+
+    return qfalse;
+  }
+
+  if( command->dedicated && !g_dedicated.integer )
+    return qfalse;
+
+  command->function( );
+  return qtrue;
+}

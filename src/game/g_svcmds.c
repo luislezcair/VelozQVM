@@ -97,6 +97,20 @@ void  Svcmd_EntityList_f( void )
   }
 }
 
+static gclient_t *ClientForString( char *s )
+{
+  int  idnum;
+
+  idnum = G_ClientNumberFromString( s );
+  if( idnum == -1 )
+  {
+    G_Printf( "%s", "Client not found\n" );
+    return NULL;
+  }
+
+  return &level.clients[ idnum ];
+}
+
 /*
 ===================
 Svcmd_LayoutSave_f
@@ -275,6 +289,66 @@ static void Svcmd_MapRotation_f( void )
     G_Printf( "maprotation: invalid map rotation \"%s\"\n", rotationName );
 }
 
+static void Svcmd_Status_f( void )
+{
+  int       i;
+  gclient_t *cl;
+  char      userinfo[ MAX_INFO_STRING ];
+
+  G_Printf( "slot score ping address               rate     name\n" );
+  G_Printf( "---- ----- ---- -------               ----     ----\n" );
+  for( i = 0, cl = level.clients; i < level.maxclients; i++, cl++ )
+  {
+    if( cl->pers.connected == CON_DISCONNECTED )
+      continue;
+
+    G_Printf( "%-4d ", i );
+    G_Printf( "%-5d ", cl->ps.persistant[ PERS_SCORE ] );
+
+    if( cl->pers.connected == CON_CONNECTING )
+      G_Printf( "CNCT " );
+    else
+      G_Printf( "%-4d ", cl->ps.ping );
+
+    trap_GetUserinfo( i, userinfo, sizeof( userinfo ) );
+    G_Printf( "%-21s ", Info_ValueForKey( userinfo, "ip" ) );
+    G_Printf( "%-8d ", Info_ValueForKey( userinfo, "rate" ) );
+    G_Printf( "%s\n", cl->pers.netname );
+  }
+}
+
+static void Svcmd_DumpUser_f( void )
+{
+  char name[ MAX_STRING_CHARS ], userinfo[ MAX_INFO_STRING ];
+  char key[ BIG_INFO_KEY ], value[ BIG_INFO_VALUE ];
+  const char *info;
+  gclient_t *cl;
+
+  if( trap_Argc( ) != 2 )
+  {
+    G_Printf( "usage: dumpuser <player>\n" );
+    return;
+  }
+
+  trap_Argv( 1, name, sizeof( name ) );
+  cl = ClientForString( name );
+  if( !cl )
+    return;
+
+  trap_GetUserinfo( cl-level.clients, userinfo, sizeof( userinfo ) );
+  info = &userinfo[ 0 ];
+  G_Printf( "userinfo\n--------\n" );
+
+  while( 1 )
+  {
+    Info_NextPair( &info, key, value );
+    if( !*info )
+      return;
+
+    G_Printf( "%-20s%s\n", key, value );
+  }
+}
+
 struct svcmd
 {
   char     *cmd;
@@ -287,6 +361,7 @@ struct svcmd
     { "alienWin", qfalse, Svcmd_AlienWin_f },
     { "chat", qtrue, Svcmd_MessageWrapper },
     { "cp", qtrue, Svcmd_CenterPrint_f },
+    { "dumpuser", qfalse, Svcmd_DumpUser_f },
     { "entitylist", qfalse, Svcmd_EntityList_f },
     { "evacuation", qfalse, Svcmd_Evacuation_f },
     { "game_memory", qfalse, Svcmd_GameMem_f },
@@ -299,6 +374,7 @@ struct svcmd
     { "nobuildsave", qfalse, G_NobuildSave },
     { "say", qtrue, Svcmd_MessageWrapper },
     { "say_admins", qtrue, Svcmd_MessageWrapper },
+    { "status", qfalse, Svcmd_Status_f },
     { "stopMapRotation", qfalse, G_StopMapRotation }
 };
 

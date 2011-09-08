@@ -851,6 +851,7 @@ qboolean  G_FollowNewClient( gentity_t *ent, int dir );
 void      G_ToggleFollow( gentity_t *ent );
 
 qboolean  G_MatchOnePlayer( int *plist, char *err, int len );
+int       G_ClientNumberFromString( char *s );
 int       G_ClientNumbersFromString( char *s, int *plist );
 
 void      G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText );

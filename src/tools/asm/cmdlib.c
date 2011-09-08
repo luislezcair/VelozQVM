@@ -38,6 +38,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	BASEDIRNAME	"quake"		// assumed to have a 2 or 3 following
 #define PATHSEPERATOR   '/'
 
+#ifndef EEXIST
+    #define EEXIST 17
+#endif
+
 // set these before calling CheckParm
 int myargc;
 char **myargv;

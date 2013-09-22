@@ -1077,10 +1077,10 @@ static int G_GetMapVoteWinner( int *winvotes, int *totalvotes )
 
 qboolean G_IntermissionMapVoteWinner( void )
 {
-  int winner, winvotes, totalvotes;
+  int winvotes, totalvotes;
   int nonvotes;
 
-  winner = G_GetMapVoteWinner( &winvotes, &totalvotes );
+  G_GetMapVoteWinner( &winvotes, &totalvotes );
   if( winvotes * 2 > level.numConnectedClients )
     return qtrue;
   nonvotes = level.numConnectedClients - totalvotes;

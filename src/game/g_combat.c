@@ -1260,7 +1260,6 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 {
   gclient_t *client;
   int     take;
-  int     save;
   int     asave = 0;
   int     knockback;
   int     takeNoOverkill;
@@ -1433,7 +1432,6 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
   }
 
   take = damage;
-  save = 0;
 
   // add to the damage inflicted on a player this frame
   // the total will be turned into screen blends and view angle kicks

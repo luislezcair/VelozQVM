@@ -2715,8 +2715,6 @@ void Cmd_Devolve_f( gentity_t *ent )
   int       clientNum;
   int       i;
   vec3_t    infestOrigin;
-  int       allowedClasses[ PCL_NUM_CLASSES ];
-  int       numClasses = 0;
   pClass_t  currentClass = ent->client->ps.stats[ STAT_PCLASS ];
   pClass_t  newClass;
   int       entityList[ MAX_GENTITIES ];
@@ -2736,9 +2734,6 @@ void Cmd_Devolve_f( gentity_t *ent )
   }
 
   clientNum = ent->client - level.clients;
-
-  if( BG_ClassIsAllowed( PCL_ALIEN_BUILDER0 ) )
-    allowedClasses[ numClasses++ ] = PCL_ALIEN_BUILDER0;
 
   if( ent->client->pers.teamSelection == PTE_ALIENS &&
       !( ent->client->ps.stats[ STAT_STATE ] & SS_INFESTING ) &&

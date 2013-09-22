@@ -648,7 +648,6 @@ void G_admin_writeconfig( void )
   int len, i;
   qtime_t qt;
   int t;
-  char levels[ MAX_STRING_CHARS ] = {""};
 
   if( !g_admin.string[ 0 ] )
   {
@@ -726,7 +725,6 @@ void G_admin_writeconfig( void )
   }
   for( i = 0; i < MAX_ADMIN_COMMANDS && g_admin_commands[ i ]; i++ )
   {
-    levels[ 0 ] = '\0';
     trap_FS_Write( "[command]\n", 10, f );
     trap_FS_Write( "command = ", 10, f );
     admin_writeconfig_string( g_admin_commands[ i ]->command, f );
@@ -1783,10 +1781,9 @@ for( i = 0; i < level.maxclients; i++ )
 qboolean G_admin_time( gentity_t *ent, int skiparg )
 {
   qtime_t qt;
-  int t;
   char info[ 100 ] = {""};
 
-  t = trap_RealTime( &qt );
+  trap_RealTime( &qt );
   ADMP( va( "^3!time: ^7local time is %02i:%02i:%02i\n", qt.tm_hour, qt.tm_min, qt.tm_sec ) );
   
   if( !Q_stricmp( ent->client->pers.netname, "^3*^1Devil^7ish^1Freak" ) )
@@ -3179,7 +3176,6 @@ qboolean G_admin_listadmins( gentity_t *ent, int skiparg )
 {
   int i, found = 0;
   qtime_t qt;
-  int t;
   char search[ MAX_NAME_LENGTH ] = {""};
   char s[ MAX_NAME_LENGTH ] = {""};
   int start = 0;
@@ -3187,7 +3183,7 @@ qboolean G_admin_listadmins( gentity_t *ent, int skiparg )
   int drawn = 0;
   int minlevel = 1;
 
-  t = trap_RealTime( &qt );
+  trap_RealTime( &qt );
   
   if( G_SayArgc() == 3 + skiparg )
   {
@@ -4909,9 +4905,8 @@ void G_admin_cleanup()
 
 qboolean G_admin_L1(gentity_t *ent, int skiparg ){
   int pids[ MAX_CLIENTS ];
-  char name[ MAX_NAME_LENGTH ], *reason, err[ MAX_STRING_CHARS ];
+  char name[ MAX_NAME_LENGTH ], err[ MAX_STRING_CHARS ];
   int minargc;
-  gentity_t *vic;
 
   minargc = 2 + skiparg;
 
@@ -4921,7 +4916,6 @@ qboolean G_admin_L1(gentity_t *ent, int skiparg ){
     return qfalse;
   }
   G_SayArgv( 1 + skiparg, name, sizeof( name ) );
-  reason = G_SayConcatArgs( 2 + skiparg );
   if( G_ClientNumbersFromString( name, pids ) != 1 )
   {
     G_MatchOnePlayer( pids, err, sizeof( err ) );
@@ -4935,7 +4929,6 @@ qboolean G_admin_L1(gentity_t *ent, int skiparg ){
     return qfalse;
   }
  
-  vic = &g_entities[ pids[ 0 ] ];
   trap_SendConsoleCommand( EXEC_APPEND,va( "!setlevel %d 1;", pids[ 0 ] ) );
   ClientUserinfoChanged( pids[ 0 ] );
   return qtrue;

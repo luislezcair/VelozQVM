@@ -80,7 +80,7 @@ Returns a player number for either a number or name string
 Returns -1 if invalid
 ==================
 */
-int G_ClientNumberFromString( char *s )
+int G_ClientNumberFromString( gentity_t *to, char *s )
 {
   gclient_t *cl;
   int       idnum;
@@ -1539,7 +1539,7 @@ void Cmd_CallVote_f( gentity_t *ent )
     else
     {
       // look for an exact name match (sets clientNum to -1 if it fails) 
-      clientNum = G_ClientNumberFromString( arg2 );
+      clientNum = G_ClientNumberFromString( ent, arg2 );
     }
     
     if( clientNum==-1  && numMatches > 1 ) 
@@ -2063,7 +2063,7 @@ void Cmd_CallTeamVote_f( gentity_t *ent )
     else
     {
       // look for an exact name match (sets clientNum to -1 if it fails) 
-      clientNum = G_ClientNumberFromString( arg2plus );
+      clientNum = G_ClientNumberFromString( ent, arg2plus );
     }
     
     if( clientNum==-1  && numMatches > 1 ) 
@@ -4536,7 +4536,7 @@ void Cmd_Follow_f( gentity_t *ent )
     }
     else
     {
-      i = G_ClientNumberFromString( arg );
+      i = G_ClientNumberFromString( ent, arg );
 
       if( i == -1 )
       {
@@ -4870,7 +4870,7 @@ static void Cmd_Ignore_f( gentity_t *ent )
      else
      {
        // look for an exact name match before bailing out
-       clientNum = G_ClientNumberFromString( arg1 );
+       clientNum = G_ClientNumberFromString( ent, arg1 );
        if( clientNum == -1 )
        {
          trap_SendServerCommand( ent-g_entities,

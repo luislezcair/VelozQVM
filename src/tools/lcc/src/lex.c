@@ -2,9 +2,6 @@
 #include <float.h>
 #include <errno.h>
 
-#ifndef ERANGE
-    #define     ERANGE          34
-#endif
 
 #define MAXTOKEN 32
 

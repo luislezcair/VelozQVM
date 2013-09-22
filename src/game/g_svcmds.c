@@ -97,18 +97,73 @@ void  Svcmd_EntityList_f( void )
   }
 }
 
-static gclient_t *ClientForString( char *s )
+gclient_t *ClientForString( const char *s )
 {
-  int  idnum;
+  gclient_t *cl;
+  int       i;
+  int       idnum;
 
-  idnum = G_ClientNumberFromString( s );
-  if( idnum == -1 )
+  // numeric values are just slot numbers
+  if( s[ 0 ] >= '0' && s[ 0 ] <= '9' )
   {
-    G_Printf( "%s", "Client not found\n" );
-    return NULL;
+    idnum = atoi( s );
+
+    if( idnum < 0 || idnum >= level.maxclients )
+    {
+      Com_Printf( "Bad client slot: %i\n", idnum );
+      return NULL;
+    }
+
+    cl = &level.clients[ idnum ];
+
+    if( cl->pers.connected == CON_DISCONNECTED )
+    {
+      G_Printf( "Client %i is not connected\n", idnum );
+      return NULL;
+    }
+
+    return cl;
   }
 
-  return &level.clients[ idnum ];
+  // check for a name match
+  for( i = 0; i < level.maxclients; i++ )
+  {
+    cl = &level.clients[ i ];
+    if( cl->pers.connected == CON_DISCONNECTED )
+      continue;
+
+    if( !Q_stricmp( cl->pers.netname, s ) )
+      return cl;
+  }
+
+  G_Printf( "User %s is not on the server\n", s );
+
+  return NULL;
+}
+
+/*
+===================
+Svcmd_ForceTeam_f
+
+forceteam <player> <team>
+===================
+*/
+void  Svcmd_ForceTeam_f( void )
+{
+  gclient_t *cl;
+  char      str[ MAX_TOKEN_CHARS ];
+
+  // find the player
+  trap_Argv( 1, str, sizeof( str ) );
+  cl = ClientForString( str );
+
+  if( !cl )
+    return;
+
+  // set the team
+  trap_Argv( 2, str, sizeof( str ) );
+  /*SetTeam( &g_entities[cl - level.clients], str );*/
+  //FIXME: tremulise this
 }
 
 /*
@@ -127,7 +182,7 @@ void  Svcmd_LayoutSave_f( void )
 
   if( trap_Argc( ) != 2 )
   {
-    G_Printf( "usage: layoutsave <name>\n" );
+    G_Printf( "usage: layoutsave LAYOUTNAME\n" );
     return;
   }
   trap_Argv( 1, str, sizeof( str ) );
@@ -136,7 +191,9 @@ void  Svcmd_LayoutSave_f( void )
   s = &str[ 0 ];
   while( *s && i < sizeof( str2 ) - 1 )
   {
-    if( isalnum( *s ) || *s == '-' || *s == '_' )
+    if( ( *s >= '0' && *s <= '9' ) ||
+      ( *s >= 'a' && *s <= 'z' ) ||
+      ( *s >= 'A' && *s <= 'Z' ) || *s == '-' || *s == '_' )
     {
       str2[ i++ ] = *s;
       str2[ i ] = '\0';
@@ -178,7 +235,32 @@ void  Svcmd_LayoutLoad_f( void )
   level.restarted = qtrue;
 }
 
+/*
+===================
+Svcmd_NobuildSave_f
+
+nobuildsave
+===================
+*/
+void  Svcmd_NobuildSave_f( void )
+{
+  G_NobuildSave();
+}
+
 char  *ConcatArgs( int start );
+
+/*
+===================
+Svcmd_NobuildLoad_f
+
+nobuildload
+
+===================
+*/
+void  Svcmd_NobuildLoad_f( void )
+{
+  G_NobuildLoad();
+}
 
 static void Svcmd_AdmitDefeat_f( void )
 {
@@ -289,66 +371,6 @@ static void Svcmd_MapRotation_f( void )
     G_Printf( "maprotation: invalid map rotation \"%s\"\n", rotationName );
 }
 
-static void Svcmd_Status_f( void )
-{
-  int       i;
-  gclient_t *cl;
-  char      userinfo[ MAX_INFO_STRING ];
-
-  G_Printf( "slot score ping address               rate     name\n" );
-  G_Printf( "---- ----- ---- -------               ----     ----\n" );
-  for( i = 0, cl = level.clients; i < level.maxclients; i++, cl++ )
-  {
-    if( cl->pers.connected == CON_DISCONNECTED )
-      continue;
-
-    G_Printf( "%-4d ", i );
-    G_Printf( "%-5d ", cl->ps.persistant[ PERS_SCORE ] );
-
-    if( cl->pers.connected == CON_CONNECTING )
-      G_Printf( "CNCT " );
-    else
-      G_Printf( "%-4d ", cl->ps.ping );
-
-    trap_GetUserinfo( i, userinfo, sizeof( userinfo ) );
-    G_Printf( "%-21s ", Info_ValueForKey( userinfo, "ip" ) );
-    G_Printf( "%-8s ", Info_ValueForKey( userinfo, "rate" ) );
-    G_Printf( "%s\n", cl->pers.netname );
-  }
-}
-
-static void Svcmd_DumpUser_f( void )
-{
-  char name[ MAX_STRING_CHARS ], userinfo[ MAX_INFO_STRING ];
-  char key[ BIG_INFO_KEY ], value[ BIG_INFO_VALUE ];
-  const char *info;
-  gclient_t *cl;
-
-  if( trap_Argc( ) != 2 )
-  {
-    G_Printf( "usage: dumpuser <player>\n" );
-    return;
-  }
-
-  trap_Argv( 1, name, sizeof( name ) );
-  cl = ClientForString( name );
-  if( !cl )
-    return;
-
-  trap_GetUserinfo( cl-level.clients, userinfo, sizeof( userinfo ) );
-  info = &userinfo[ 0 ];
-  G_Printf( "userinfo\n--------\n" );
-
-  while( 1 )
-  {
-    Info_NextPair( &info, key, value );
-    if( !*info )
-      return;
-
-    G_Printf( "%-20s%s\n", key, value );
-  }
-}
-
 struct svcmd
 {
   char     *cmd;
@@ -361,20 +383,19 @@ struct svcmd
     { "alienWin", qfalse, Svcmd_AlienWin_f },
     { "chat", qtrue, Svcmd_MessageWrapper },
     { "cp", qtrue, Svcmd_CenterPrint_f },
-    { "dumpuser", qfalse, Svcmd_DumpUser_f },
     { "entitylist", qfalse, Svcmd_EntityList_f },
     { "evacuation", qfalse, Svcmd_Evacuation_f },
+    { "forceteam", qfalse, Svcmd_ForceTeam_f },
     { "game_memory", qfalse, Svcmd_GameMem_f },
     { "humanWin", qfalse, Svcmd_HumanWin_f },
     { "layoutload", qfalse, Svcmd_LayoutLoad_f },
     { "layoutsave", qfalse, Svcmd_LayoutSave_f },
     { "m", qtrue, Svcmd_MessageWrapper },
     { "mapRotation", qfalse, Svcmd_MapRotation_f },
-    { "nobuildload", qfalse, G_NobuildLoad },
-    { "nobuildsave", qfalse, G_NobuildSave },
+    { "nobuildload", qfalse, Svcmd_NobuildLoad_f },
+    { "nobuildsave", qfalse, Svcmd_NobuildSave_f },
     { "say", qtrue, Svcmd_MessageWrapper },
     { "say_admins", qtrue, Svcmd_MessageWrapper },
-    { "status", qfalse, Svcmd_Status_f },
     { "stopMapRotation", qfalse, G_StopMapRotation }
 };
 

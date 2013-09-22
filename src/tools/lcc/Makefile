@@ -9,7 +9,7 @@ else
 endif
 
 CC=gcc
-LCC_CFLAGS=-O2 -Wall -fno-strict-aliasing -MMD
+LCC_CFLAGS=-O2 -Wall -fno-strict-aliasing -MMD -ffreestanding
 LDFLAGS=
 LD=gcc
 AR=ar

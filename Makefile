@@ -25,7 +25,7 @@ BUILD_CLIENT     = 0
 BUILD_CLIENT_SMP = 0
 BUILD_SERVER     = 0
 BUILD_GAME_SO    = 0
-BUILD_GAME_QVM   = 1
+BUILD_GAME_QVM   = 0
 
 #############################################################################
 #
@@ -179,7 +179,7 @@ ifeq ($(PLATFORM),linux)
   endif
   endif
 
-  BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes -pipe
+  BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes -pipe -ffreestanding
 
   ifeq ($(USE_OPENAL),1)
     BASE_CFLAGS += -DUSE_OPENAL=1

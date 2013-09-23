@@ -4,5 +4,11 @@ VelozQVM.includes
 VelozQVM.creator
 VelozQVM.creator.user
 *.local
+*.exe
 build/
 src/tools/lcc/build*/
+src/tools/asm/q3asm
+src/tools/q3asm
+src/tools/q3cpp
+src/tools/q3lcc
+src/tools/q3rcc

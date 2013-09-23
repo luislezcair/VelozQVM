@@ -3,3 +3,6 @@ VelozQVM.files
 VelozQVM.includes
 VelozQVM.creator
 VelozQVM.creator.user
+*.local
+build/
+src/tools/lcc/build*/

@@ -118,19 +118,19 @@ void G_ProcessProximityMine(gentity_t *ent) {
 	
 	//To prevent nades that last forever(when they arnt meant to)
 	if( g_proximityMinesLiveTime.integer != -1 && g_proximityMinesLiveTime.integer <= 100 )
-	 {
+    {
 	  trap_Cvar_Set( "g_proximityMinesLiveTime", "100" );
 	  ent->nextthink = level.time;
 	  ent->think = G_ExplodeMissile;
 	  return;
-	 }
+    }
 	
-        if( g_proximityMinesLiveTime.integer != -1 && ent->livetime == level.time )
-	 {
+    if( g_proximityMinesLiveTime.integer != -1 && ent->livetime == level.time )
+    {
 	  ent->nextthink = level.time;
 	  ent->think = G_ExplodeMissile;
 	  return;
-	 }
+    }
 	
 	// Grab all entities around us
 	VectorSet(range, PROXIMITY_RANGE, PROXIMITY_RANGE, PROXIMITY_RANGE);
@@ -565,52 +565,6 @@ gentity_t *launch_grenade( gentity_t *self, vec3_t start, vec3_t dir )
   bolt->splashRadius = GRENADE_RANGE;
   bolt->methodOfDeath = MOD_GRENADE;
   bolt->splashMethodOfDeath = MOD_GRENADE;
-  bolt->clipmask = MASK_SHOT;
-  bolt->target_ent = NULL;
-  bolt->r.mins[ 0 ] = bolt->r.mins[ 1 ] = bolt->r.mins[ 2 ] = -3.0f;
-  bolt->r.maxs[ 0 ] = bolt->r.maxs[ 1 ] = bolt->r.maxs[ 2 ] = 3.0f;
-  bolt->s.time = level.time;
-
-  bolt->s.pos.trType = TR_GRAVITY;
-  bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;   // move a bit on the very first frame
-  VectorCopy( start, bolt->s.pos.trBase );
-  VectorScale( dir, GRENADE_SPEED, bolt->s.pos.trDelta );
-  SnapVector( bolt->s.pos.trDelta );      // save net bandwidth
-
-  VectorCopy( start, bolt->r.currentOrigin );
-
-  return bolt;
-}
-
-/*
-=================
-launch_grenade2
-
-This is called in the explode command in g_admin.c
-=================
-*/
-gentity_t *launch_grenade2( gentity_t *self, vec3_t start, vec3_t dir )
-{
-  gentity_t *bolt;
-
-  VectorNormalize( dir );
-
-  bolt = G_Spawn( );
-  bolt->classname = "grenade";
-  bolt->nextthink = level.time;
-  bolt->think = G_ExplodeMissile;
-  bolt->s.eType = ET_MISSILE;
-  bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-  bolt->s.weapon = WP_GRENADE;
-  bolt->s.eFlags = EF_BOUNCE_HALF;
-  bolt->s.generic1 = WPM_PRIMARY; //weaponMode
-  bolt->r.ownerNum = self->s.number;
-  bolt->parent = self;
-  bolt->damage = GRENADE_DAMAGE;
-  bolt->splashDamage = GRENADE_DAMAGE;
-  bolt->splashRadius = GRENADE_RANGE;
-  bolt->methodOfDeath = MOD_SUICIDE;
-  bolt->splashMethodOfDeath = MOD_EXPLODE;
   bolt->clipmask = MASK_SHOT;
   bolt->target_ent = NULL;
   bolt->r.mins[ 0 ] = bolt->r.mins[ 1 ] = bolt->r.mins[ 2 ] = -3.0f;

@@ -119,8 +119,7 @@ char *modNames[ ] =
   "MOD_ATUBE",
   "MOD_OVERMIND",
   "MOD_RADIATION",
-  "MOD_SLAP",
-  "MOD_EXPLODE"
+  "MOD_SLAP"
 };
 
 /*
@@ -226,22 +225,6 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
     // setting the animations etc
     goto finish_dying;
   }
-  
-  else if( meansOfDeath == MOD_EXPLODE )
-    {
-      if( self == attacker || !attacker )
-        trap_SendServerCommand( -1, va( "print \"%s^7 blew up in a firey death.\n\"",
-          self->client->pers.netname ) );
-      else
-        trap_SendServerCommand( -1,
-          va( "print \"^7%s^7 shouldn't have stood so close to ^7%s^7\n\"",
-          self->client->pers.netname, killerName ) );
-
-      // do not send obituary or credit any kills by slapping, skip straight to
-      // setting the animations etc
-      goto finish_dying;
-    }
-
 
   // broadcast the death event to everyone
   else if( !tk )

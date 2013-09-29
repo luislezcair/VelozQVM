@@ -349,9 +349,6 @@ typedef struct
   int headshots;
   int hits;
   int hitslocational;
-  int spreekills;
-  int spreefeeds;
-  int spreebleeds;
   int teamkills;
   int dretchbasytime;
   int jetpackusewallwalkusetime;
@@ -404,9 +401,6 @@ typedef struct
   qboolean            denyBuild;
   int                 denyHumanWeapons;
   int                 denyAlienClasses;
-  int                 spreeTime1000;
-  qboolean            bleeder;
-  int                 bleederLastWarn;
   qboolean            paused;
   int                 adminLevel;
   qboolean            specd;
@@ -416,7 +410,7 @@ typedef struct
   qboolean            healing;
 
   qboolean            ignoreAdminWarnings;
-  int		      lastTeamStatus;
+  int                 lastTeamStatus;
 
   qboolean            nlocked;
 
@@ -802,8 +796,6 @@ typedef struct
   int               lastBuildID;
   int               lastTeamUnbalancedTime;
   int               numTeamWarnings;
-
-  int               bleeders;
   
   qboolean	    nobuild;
   float		    nobuildArea;
@@ -1296,11 +1288,6 @@ extern  gentity_t       g_entities[ MAX_GENTITIES ];
 
 #define FOFS(x) ((long int)&(((gentity_t *)0)->x))
 
-//spree values
-#define SPREE_FEED_VALUE 120
-#define SPREE_FEED_FADE  3
-#define SPREE_FEED_DELAY 50
-
 extern  vmCvar_t  g_dedicated;
 extern  vmCvar_t  g_cheats;
 extern  vmCvar_t  g_maxclients;     // allow this many total, including spectators
@@ -1448,10 +1435,6 @@ extern  vmCvar_t  g_buildLogMaxLength;
 extern  vmCvar_t  g_publicSayadmins;
 extern  vmCvar_t  g_myStats;
 extern  vmCvar_t  g_antiSpawnBlock;
-
-extern  vmCvar_t  g_killingSpree;
-extern  vmCvar_t  g_feedingSpree;
-extern  vmCvar_t  g_bleedingSpree;
 
 extern  vmCvar_t  g_sayAreaLocations;
 

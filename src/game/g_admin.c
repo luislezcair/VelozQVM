@@ -246,13 +246,6 @@ g_admin_cmd_t g_admin_cmds[ ] =
      ""
     },
 
-    {"outlaw", G_admin_outlaw, "outlaw",
-      "adjust a player's bleed counter, usually to make their base turn on them."
-      " bleed value can be '?' to query their current value, a number to add and activate bleed status,"
-      " +num or -num will silently adjust their current bleed value, 0 will pardon them",
-      "(^5name|slot^7) (^5bleed value)"
-    },
-
     {"passvote", G_admin_passvote, "passvote",
       "pass a vote currently taking place",
       ""
@@ -6335,12 +6328,6 @@ void G_admin_tklog_log( gentity_t *attacker, gentity_t *victim, int meansOfDeath
     tklog->damage = victim->client->tkcredits[ attacker->s.number ];
     tklog->value = victim->client->ps.stats[ STAT_MAX_HEALTH ];
   }
-  else
-  {
-    Q_strncpyz( tklog->victim, "^3BLEEDING", sizeof( tklog->victim ) );
-    tklog->damage = attacker->client->pers.statscounters.spreebleeds;
-    tklog->value = g_bleedingSpree.integer * 100;
-  }
 
   tklog->team = attacker->client->ps.stats[ STAT_PTEAM ];
   if( meansOfDeath == MOD_GRENADE )
@@ -7254,101 +7241,6 @@ qboolean G_admin_demo( gentity_t *ent, int skiparg )
   ADMP( va( "^3!demo: ^7your visibility of admin chat is now %s\n",
     ( ent->client->pers.ignoreAdminWarnings ) ? "^1disabled" : "^2enabled" ) );
 
-  return qtrue;
-}
-
-qboolean G_admin_outlaw( gentity_t *ent, int skiparg )
-{
-  int pids[ MAX_CLIENTS ];
-  char name[ MAX_NAME_LENGTH ], err[ MAX_STRING_CHARS ];
-  char valuebuf[ 8 ];
-  gentity_t *vic;
-  int points;
-  qboolean activate = qtrue;
-
-  if( !g_bleedingSpree.integer )
-  {
-    ADMP( "^3!outlaw: ^7bleeding sprees are disabled\n" );
-    return qfalse;
-  }
-
-  if( G_SayArgc() < 2 + skiparg )
-  {
-    ADMP( "^3!outlaw: ^7usage: !outlaw [name|slot#] (value)\n" );
-    return qfalse;
-  }
-  G_SayArgv( 1 + skiparg, name, sizeof( name ) );
-  if( G_ClientNumbersFromString( name, pids ) != 1 )
-  {
-    G_MatchOnePlayer( pids, err, sizeof( err ) );
-    ADMP( va( "^3!mute: ^7%s\n", err ) );
-    return qfalse;
-  }
-  vic = &g_entities[ pids[ 0 ] ];
-
-  if( G_SayArgc() > 2 + skiparg )
-  {
-    G_SayArgv( 2 + skiparg, valuebuf, sizeof( valuebuf ) );
-    if( valuebuf[ 0 ] == '?' )
-    {
-      ADMP( va( "^3!outlaw: ^7%s^7's bleeder value is %d\n",
-        vic->client->pers.netname,
-        vic->client->pers.statscounters.spreebleeds ) );
-      return qtrue;
-    }
-    if( valuebuf[ 0 ] == '+' || valuebuf[ 0 ] == '-' )
-    {
-      activate = qfalse;
-    }
-    points = atoi( valuebuf );
-  }
-  else
-  {
-    points = ( g_bleedingSpree.integer + 1 ) * 100;
-  }
-
-  if( !admin_higher( ent, &g_entities[ pids[ 0 ] ] ) )
-  {
-    ADMP( "^3!outlaw: ^7sorry, but your intended victim has a higher admin"
-        " level than you\n" );
-    return qfalse;
-  }
-  if( points )
-  {
-    vic->client->pers.statscounters.spreebleeds += points;
-    if( vic->client->pers.statscounters.spreebleeds < 1 )
-      vic->client->pers.statscounters.spreebleeds = 1;
-    if( activate && !vic->client->pers.bleeder )
-    {
-      vic->client->pers.bleeder = qtrue;
-      level.bleeders++;
-
-      AP( va( "print \"^3!outlaw: ^7%s^7 has been designated an outlaw by ^7%s\n\"",
-            vic->client->pers.netname,
-            ( ent ) ? ent->client->pers.netname : "console" ) );
-    }
-    else
-    {
-      AP( va( "print \"^3!outlaw: ^7%s^7 bleeder value has been adjusted by ^7%s\n\"",
-            vic->client->pers.netname,
-            ( ent ) ? ent->client->pers.netname : "console" ) );
-      ADMP( va( "^3!outlaw: ^7%s^7's bleeder value is now %d\n",
-        vic->client->pers.netname,
-        vic->client->pers.statscounters.spreebleeds ) );
-    }
-  }
-  else
-  {
-    vic->client->pers.statscounters.spreebleeds = 0;
-    if( vic->client->pers.bleeder )
-      vic->client->pers.bleeder = qfalse;
-    if( level.bleeders )
-      level.bleeders--;
-
-    AP( va( "print \"^3!outlaw: ^7%s^7 has been pardoned by ^7%s\n\"",
-            vic->client->pers.netname,
-            ( ent ) ? ent->client->pers.netname : "console" ) );
-  }
   return qtrue;
 }
 

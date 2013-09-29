@@ -1092,9 +1092,8 @@ void AAcidTube_Think( gentity_t *self )
         continue;
 
       if( enemy->client &&
-          ( enemy->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS || enemy->client->pers.bleeder ) &&
-          !level.paused &&
-	  !enemy->client->pers.paused )
+          enemy->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS &&
+          !level.paused && !enemy->client->pers.paused )
       {
         self->timestamp = level.time;
         self->think = AAcidTube_Damage;
@@ -1494,18 +1493,6 @@ void ABooster_Touch( gentity_t *self, gentity_t *other, trace_t *trace )
 
   if( client && client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS )
     return;
-
-  if( client->pers.bleeder )
-  {
-    if( !(client->ps.stats[ STAT_STATE ] & SS_POISONCLOUDED ) )
-    {
-      client->ps.stats[ STAT_STATE ] |= SS_POISONCLOUDED;
-      client->lastPoisonCloudedTime = level.time;
-      trap_SendServerCommand( client->ps.clientNum, "poisoncloud" );
-      trap_SendServerCommand( client->ps.clientNum, "print \"Your booster has poisoned you\n\"" );
-    }
-    return;
-  }
 
   //only allow boostage once every 30 seconds
   if( client->lastBoostedTime + BOOSTER_INTERVAL > level.time )
@@ -1948,7 +1935,6 @@ void HMedistat_Think( gentity_t *self )
       {
         if( player->health < player->client->ps.stats[ STAT_MAX_HEALTH ] &&
             player->client->ps.pm_type != PM_DEAD &&
-            !player->client->pers.bleeder &&
             self->enemy == player )
           occupied = qtrue;
       }
@@ -1967,8 +1953,7 @@ void HMedistat_Think( gentity_t *self )
 	  continue; // notarget cancels even beneficial effects?
 
         if( player->client && player->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS &&
-            player->client->radiationTimer < g_radiationTime.integer &&
-            !player->client->pers.bleeder )
+            player->client->radiationTimer < g_radiationTime.integer )
         {
           if( ( player->health < player->client->ps.stats[ STAT_MAX_HEALTH ] ||
                 player->client->ps.stats[ STAT_STAMINA ] < MAX_STAMINA ) &&
@@ -1989,34 +1974,6 @@ void HMedistat_Think( gentity_t *self )
       }
     }
 
-    // bleeding spree retribution
-    if( level.bleeders && !self->enemy )
-    {
-      //look for something to hurt
-      for( i = 0; i < num; i++ )
-      {
-        player = &g_entities[ entityList[ i ] ];
-
-        if( player->client && player->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS && player->client->pers.bleeder )
-        {
-          if( player->health > 0 &&
-              player->client->ps.pm_type != PM_DEAD )
-          {
-            self->enemy = player;
-
-            //start the heal anim
-            if( !self->active )
-            {
-              G_SetBuildableAnim( self, BANIM_ATTACK1, qfalse );
-              self->active = qtrue;
-            }
-          }
-          if( BG_InventoryContainsUpgrade( UP_MEDKIT, player->client->ps.stats ) )
-            BG_RemoveUpgradeFromInventory( UP_MEDKIT, player->client->ps.stats );
-        }
-      }
-    }
-
     //nothing left to heal so go back to idling
     if( !self->enemy && self->active )
     {
@@ -2027,12 +1984,6 @@ void HMedistat_Think( gentity_t *self )
     }
     else if( self->enemy ) //heal!
     {
-      if( self->enemy->client->pers.bleeder )
-      {
-        G_Damage( self->enemy, NULL, NULL, NULL, NULL, 10, 0, MOD_SLIME );
-        return;
-      }
-
       if( self->enemy->client && self->enemy->client->ps.stats[ STAT_STATE ] & SS_POISONED )
         self->enemy->client->ps.stats[ STAT_STATE ] &= ~SS_POISONED;
 
@@ -2197,8 +2148,7 @@ qboolean HMGTurret_CheckTarget( gentity_t *self, gentity_t *target, qboolean ign
   if( !traceEnt->client )
     return qfalse;
 
-  if( traceEnt->client && traceEnt->client->ps.stats[ STAT_PTEAM ] != PTE_ALIENS
-      && !traceEnt->client->pers.bleeder )
+  if( traceEnt->client && traceEnt->client->ps.stats[ STAT_PTEAM ] != PTE_ALIENS )
     return qfalse;
 
   return qtrue;
@@ -2256,24 +2206,6 @@ void HMGTurret_FindEnemy( gentity_t *self )
           continue;
 
         //we found a target
-        self->enemy = target;
-        return;
-      }
-    }
-  }
-
-  // bleeder retribution
-  if( level.bleeders )
-  {
-    for( i = 0; i < num; i++ )
-    {
-      target = &g_entities[ entityList[ i ] ];
-
-      if( target->client && target->client->pers.bleeder )
-      {
-        if( !HMGTurret_CheckTarget( self, target, qfalse ) )
-          continue;
-
         self->enemy = target;
         return;
       }
@@ -2405,8 +2337,7 @@ void HTeslaGen_Think( gentity_t *self )
     {
         self->enemy = &g_entities[ entityList[ i ] ];
         if( self->enemy->client && self->enemy->health > 0 &&
-            (self->enemy->client->ps.stats [ STAT_PTEAM ] == PTE_ALIENS ||
-             self->enemy->client->pers.bleeder ) &&
+            self->enemy->client->ps.stats [ STAT_PTEAM ] == PTE_ALIENS &&
             Distance( self->enemy->s.pos.trBase,
                       self->s.pos.trBase ) <= TESLAGEN_RANGE )
 

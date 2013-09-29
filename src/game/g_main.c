@@ -184,10 +184,6 @@ vmCvar_t  g_publicSayadmins;
 vmCvar_t  g_myStats;
 vmCvar_t  g_antiSpawnBlock;
 
-vmCvar_t  g_killingSpree;
-vmCvar_t  g_feedingSpree;
-vmCvar_t  g_bleedingSpree;
-
 vmCvar_t  g_KillerHP;
 
 vmCvar_t  g_maraObituary;
@@ -452,10 +448,6 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_publicSayadmins, "g_publicSayadmins", "1", CVAR_ARCHIVE, 0, qfalse  },    
   { &g_minLevelToSpecMM1, "g_minLevelToSpecMM1", "0", CVAR_ARCHIVE, 0, qfalse  },
   { &g_antiSpawnBlock, "g_antiSpawnBlock", "0", CVAR_ARCHIVE, 0, qfalse  },
-
-  { &g_killingSpree, "g_killingSpree", "0", CVAR_ARCHIVE, 0, qfalse  },
-  { &g_feedingSpree, "g_feedingSpree", "0", CVAR_ARCHIVE, 0, qfalse  },
-  { &g_bleedingSpree, "g_bleedingSpree", "0", CVAR_ARCHIVE, 0, qfalse  },
   
   { &g_KillerHP, "g_KillerHP", "0", CVAR_ARCHIVE, 0, qtrue  },
   

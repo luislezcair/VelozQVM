@@ -1507,8 +1507,7 @@ void Cmd_CallVote_f( gentity_t *ent )
   // detect clientNum for partial name match votes
   if( !Q_stricmp( arg1, "kick" ) ||
     !Q_stricmp( arg1, "mute" ) ||
-    !Q_stricmp( arg1, "unmute" ) ||
-    !Q_stricmp( arg1, "slap" ))
+    !Q_stricmp( arg1, "unmute" ) )
   {
     int clientNums[ MAX_CLIENTS ] = { -1 };
     int numMatches=0;
@@ -1518,15 +1517,6 @@ void Cmd_CallVote_f( gentity_t *ent )
     {
       trap_SendServerCommand( ent-g_entities,
         "print \"callvote: no target\n\"" );
-      return;
-    }
-    
-    if( !arg3[ 0 ] )
-    {
-      if( !Q_stricmp( arg1, "slap" ) )
-        trap_SendServerCommand( ent-g_entities, "print \"callvote: no amount of damage specified\n\"" );
-      else
-        trap_SendServerCommand( ent-g_entities, "print \"callvote: no reason\n\"" );
       return;
     }
 
@@ -1667,13 +1657,11 @@ void Cmd_CallVote_f( gentity_t *ent )
       return;
     }
     
-    if (!g_devmapVotes.integer)
-    {
-    Com_sprintf( level.voteString, sizeof( level.voteString ), "map %s", arg2 );
+    if (!g_devmapVotes.integer) {
+        Com_sprintf( level.voteString, sizeof( level.voteString ), "map %s", arg2 );
     }
-    else
-    {
-    Com_sprintf( level.voteString, sizeof( level.voteString ), "devmap %s", arg2 );
+    else {
+        Com_sprintf( level.voteString, sizeof( level.voteString ), "devmap %s", arg2 );
     }
     
     Com_sprintf( level.voteDisplayString,

@@ -118,8 +118,7 @@ char *modNames[ ] =
   "MOD_ASPAWN",
   "MOD_ATUBE",
   "MOD_OVERMIND",
-  "MOD_RADIATION",
-  "MOD_SLAP"
+  "MOD_RADIATION"
 };
 
 /*
@@ -202,47 +201,22 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
   //TA: deactivate all upgrades
   for( i = UP_NONE + 1; i < UP_NUM_UPGRADES; i++ )
     BG_DeactivateUpgrade( i, self->client->ps.stats );
-    
-  if( meansOfDeath == MOD_SLAP )
-  {
-    if( self == attacker || !attacker )
-    {
-     if( g_slapKnockback.integer ){
-      trap_SendServerCommand( -1, va( "print \"%s^7 slapped themself silly\n\"",
-        self->client->pers.netname ) );
-     }
-     else {
-      trap_SendServerCommand( -1, va( "print \"%s^7 suffered a heart attck\n\"",
-        self->client->pers.netname ));
-     }
-    }
-    else
-      trap_SendServerCommand( -1,
-        va( "print \"%s^7 felt %s^7's authoritay\n\"",
-        self->client->pers.netname, killerName ) );
-
-    // do not send obituary or credit any kills by slapping, skip straight to
-    // setting the animations etc
-    goto finish_dying;
-  }
 
   // broadcast the death event to everyone
-  else if( !tk )
-  {
-  // this works as a temporary hack until the client supports it
-  if ( meansOfDeath == MOD_RADIATION )
-    trap_SendServerCommand( -1, va( "print \"%s^7 was irradiated by his base\n\"", self->client->pers.netname ) );
-  else if ( meansOfDeath == MOD_LEVEL2_CLAW && g_maraObituary.integer )
-    trap_SendServerCommand( -1, va( "print \"%s^7 bit off %s^7's face\n\"", attacker->client->pers.netname, self->client->pers.netname ) );
-  else
-  {
-    ent = G_TempEntity( self->r.currentOrigin, EV_OBITUARY );
-    ent->s.eventParm = meansOfDeath;
-    ent->s.otherEntityNum = self->s.number;
-    ent->s.otherEntityNum2 = killer;
-    ent->r.svFlags = SVF_BROADCAST; // send to everyone
-  }
-  
+  if( !tk ) {
+      // this works as a temporary hack until the client supports it
+      if ( meansOfDeath == MOD_RADIATION )
+        trap_SendServerCommand( -1, va( "print \"%s^7 was irradiated by his base\n\"", self->client->pers.netname ) );
+      else if ( meansOfDeath == MOD_LEVEL2_CLAW && g_maraObituary.integer )
+        trap_SendServerCommand( -1, va( "print \"%s^7 bit off %s^7's face\n\"", attacker->client->pers.netname, self->client->pers.netname ) );
+      else
+      {
+        ent = G_TempEntity( self->r.currentOrigin, EV_OBITUARY );
+        ent->s.eventParm = meansOfDeath;
+        ent->s.otherEntityNum = self->s.number;
+        ent->s.otherEntityNum2 = killer;
+        ent->r.svFlags = SVF_BROADCAST; // send to everyone
+      }
   }
   else if( attacker && attacker->client )
   {
@@ -261,6 +235,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
   self->client->ps.persistant[ PERS_KILLED ]++;
   self->client->pers.statscounters.deaths++;
+
   if( self->client->pers.teamSelection == PTE_ALIENS ) 
   {
    level.alienStatsCounters.deaths++;
@@ -279,20 +254,19 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
      trap_SendServerCommand( self-g_entities, va( "print \"Your killer, %s^7, had %3i HP.\n\"", killerName, attacker->health ) );
    }
 
-    if( attacker == self || OnSameTeam( self, attacker ) )
-    {
+   if( attacker == self || OnSameTeam( self, attacker ) )
+   {
       AddScore( attacker, -1 );
-
       // Normal teamkill penalty
       if( !g_retribution.integer ) {
         if( attacker->client->ps.stats[ STAT_PTEAM ] == PTE_ALIENS )
-          G_AddCreditToClient( attacker->client, -FREEKILL_ALIEN, qtrue );
+            G_AddCreditToClient( attacker->client, -FREEKILL_ALIEN, qtrue );
         else if( attacker->client->ps.stats[ STAT_PTEAM ] == PTE_HUMANS )
-          G_AddCreditToClient( attacker->client, -FREEKILL_HUMAN, qtrue );
+            G_AddCreditToClient( attacker->client, -FREEKILL_HUMAN, qtrue );
       }
-    }
-    else
-    {
+   }
+   else
+   {
       AddScore( attacker, 1 );
 
       attacker->client->lastKillTime = level.time;
@@ -305,10 +279,10 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
       {
         level.humanStatsCounters.kills++;
       }
-     }
+   }
     
-    if( attacker == self )
-    {
+   if( attacker == self )
+   {
       attacker->client->pers.statscounters.suicides++;
       if( attacker->client->pers.teamSelection == PTE_ALIENS ) 
       {
@@ -318,7 +292,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
       {
         level.humanStatsCounters.suicides++;
       }
-    }
+   }
   }
   else if( attacker->s.eType != ET_BUILDABLE )
     AddScore( self, -1 );
@@ -598,7 +572,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
     if( client->sess.spectatorClient == self->s.number )
       ScoreboardMessage( g_entities + i );
   }
-finish_dying:
+
   VectorCopy( self->s.origin, self->client->pers.lastDeathLocation );
 
   self->takedamage = qfalse; // can still be gibbed

@@ -210,9 +210,6 @@ vmCvar_t  g_creditOverflow;
 vmCvar_t  g_devmapNoGod;
 vmCvar_t  g_devmapNoStructDmg;
 
-vmCvar_t  g_slapKnockback;
-vmCvar_t  g_slapDamage;
-
 vmCvar_t  g_practiceText;
 vmCvar_t  g_practiceCount;
 
@@ -458,9 +455,6 @@ static cvarTable_t   gameCvarTable[ ] =
   { &g_tag, "g_tag", "main", CVAR_INIT, 0, qfalse },
   
   { &g_dretchPunt, "g_dretchPunt", "1", CVAR_ARCHIVE, 0, qfalse  },
-  
-  { &g_slapKnockback, "g_slapKnockback", "800", CVAR_ARCHIVE, 0, qfalse},
-  { &g_slapDamage, "g_slapDamage", "15", CVAR_ARCHIVE, 0, qfalse},
   
   { &g_allowClientBlackNames, "g_allowClientBlackNames", "1", CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
 

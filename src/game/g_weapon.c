@@ -1616,11 +1616,3 @@ void FireWeapon( gentity_t *ent )
       break;
   }
 }
-
-void Blow_up( gentity_t *ent ) {
-    // set directions
-    AngleVectors( ent->client->ps.viewangles, forward, right, up );
-    CalcMuzzlePoint( ent, forward, right, up, muzzle );
-
-    launch_grenade2( ent, ent->client->ps.origin, forward );
-}

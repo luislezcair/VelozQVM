@@ -256,8 +256,6 @@ qboolean G_admin_nobuild( gentity_t *ent, int skiparg );
 qboolean G_admin_nobuildsave( gentity_t *ent, int skiparg );
 qboolean G_admin_lockname( gentity_t *ent, int skiparg );
 
-qboolean G_admin_slap( gentity_t *ent, int skiparg );
-
 qboolean G_admin_invisible( gentity_t *ent, int skiparg );
 
 void G_admin_print( gentity_t *ent, char *m );

@@ -1020,7 +1020,6 @@ gentity_t *fire_slowBlob( gentity_t *self, vec3_t start, vec3_t dir );
 gentity_t *fire_bounceBall( gentity_t *self, vec3_t start, vec3_t dir );
 gentity_t *fire_hive( gentity_t *self, vec3_t start, vec3_t dir );
 gentity_t *launch_grenade( gentity_t *self, vec3_t start, vec3_t dir );
-gentity_t *launch_grenade2( gentity_t *self, vec3_t start, vec3_t dir );
 
 //
 // g_mover.c
@@ -1104,7 +1103,6 @@ qboolean  ConsoleCommand( void );
 void FireWeapon( gentity_t *ent );
 void FireWeapon2( gentity_t *ent );
 void FireWeapon3( gentity_t *ent );
-void Blow_up( gentity_t *ent );
 
 //
 // g_cmds.c
@@ -1453,9 +1451,6 @@ extern  vmCvar_t  g_radiationCreditsCount;
 extern  vmCvar_t  g_buyAll;
 extern  vmCvar_t  g_multipleWeapons;
 extern  vmCvar_t  g_devmapVotes;
-
-extern  vmCvar_t  g_slapKnockback;
-extern  vmCvar_t  g_slapDamage;
 
 extern  vmCvar_t g_practiceText;
 extern  vmCvar_t g_practiceCount;

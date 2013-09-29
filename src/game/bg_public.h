@@ -893,8 +893,7 @@ typedef enum
   MOD_ASPAWN,
   MOD_ATUBE,
   MOD_OVERMIND,
-  MOD_RADIATION,
-  MOD_SLAP
+  MOD_RADIATION
 } meansOfDeath_t;
 
 

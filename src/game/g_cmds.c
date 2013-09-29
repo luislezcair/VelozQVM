@@ -4607,7 +4607,7 @@ void Cmd_PTRCVerify_f( gentity_t *ent )
   int		      i;
   gentity_t *players;
 
-  if( ent->client->pers.connection )
+  if( !ent->client->pers.connection )
     return;
 
   trap_Argv( 1, s, sizeof( s ) );

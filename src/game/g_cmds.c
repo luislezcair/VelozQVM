@@ -4604,10 +4604,8 @@ void Cmd_PTRCVerify_f( gentity_t *ent )
   connectionRecord_t  *connection;
   char                s[ MAX_TOKEN_CHARS ] = { 0 };
   int                 code;
-  int		      i;
-  gentity_t *players;
 
-  if( !ent->client->pers.connection )
+  if( ent->client->pers.connection )
     return;
 
   trap_Argv( 1, s, sizeof( s ) );
@@ -4616,26 +4614,6 @@ void Cmd_PTRCVerify_f( gentity_t *ent )
     return;
 
   code = atoi( s );
-  
-  //Some sanity checks...BECAUSE THIS FUNCTION IS INSANE! lol
-  for( i = 0; i < level.maxclients; i++ )
-  {
-    players = &g_entities[ i ];
-    if( !players->client )
-      continue;
-    if( players->client->pers.connected != CON_CONNECTED )
-      continue;
-    if( players == ent )
-    continue;
-
-    if( players->client->pers.connection->ptrCode == code )
-    {
-      trap_SendServerCommand( ent - g_entities,
-        "print \"This PTR code is already in use\n\"" );
-      G_AdminsPrintf("%s^7 attempted to use %s^7's PTR code\n", ent->client->pers.netname, players->client->pers.netname);
-      return;
-    }
-  }
 
   connection = G_FindConnectionForCode( code );
   if( connection && connection->clientNum == -1 )
@@ -4673,8 +4651,6 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
   char                s[ MAX_TOKEN_CHARS ] = { 0 };
   int                 code;
   connectionRecord_t  *connection;
-  int i;
-  gentity_t *players;
 
   if( ent->client->pers.joinedATeam )
   {
@@ -4688,27 +4664,7 @@ void Cmd_PTRCRestore_f( gentity_t *ent )
     return;
 
   code = atoi( s );
-  
-  //Some sanity checks..
-  for( i = 0; i < level.maxclients; i++ )
-  {
-    players = &g_entities[ i ];
-    if( !players->client )
-      continue;
-    if( players->client->pers.connected != CON_CONNECTED )
-      continue;
-    if( players == ent )
-    continue;
 
-    if( players->client->pers.connection->ptrCode == code )
-    {
-      trap_SendServerCommand( ent - g_entities,
-        "print \"This PTR code is already in use\n\"" );
-      G_AdminsPrintf("%s^7 attempted to use %s^7's PTR code\n", ent->client->pers.netname, players->client->pers.netname);
-      return;
-    }
-  }
-  
   connection = ent->client->pers.connection;
   if( connection && connection->ptrCode == code )
   {

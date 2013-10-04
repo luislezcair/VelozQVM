@@ -248,7 +248,6 @@ vmCvar_t  g_AllStatsTime;
 vmCvar_t  g_wwNoHovelBuild;
 
 vmCvar_t  g_specNoclip;
-vmCvar_t  g_allowDevolve;
 
 
 static cvarTable_t   gameCvarTable[ ] =
@@ -481,10 +480,8 @@ static cvarTable_t   gameCvarTable[ ] =
   
   { &g_wwNoHovelBuild, "g_wwNoHovelBuild", "0", CVAR_ARCHIVE, 0, qfalse  },
   
-  { &g_specNoclip, "g_specNoclip", "0", CVAR_ARCHIVE, 0, qtrue  },
-  
-  { &g_allowDevolve, "g_allowDevolve", "0", CVAR_ARCHIVE, 0, qtrue  },
-  
+  { &g_specNoclip, "g_specNoclip", "0", CVAR_ARCHIVE, 0, qtrue  }
+
 };
 
 static int gameCvarTableSize = sizeof( gameCvarTable ) / sizeof( gameCvarTable[ 0 ] );
